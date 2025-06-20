@@ -1,0 +1,19 @@
+/* Estilos globales o overrides para Bootstrap pueden ir aquí */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Para asegurar que el ToastContainer esté sobre otros elementos si se usa z-index en otros sitios */
+.toast-container {
+  z-index: 1060 !important; /* Bootstrap usa z-index hasta 1055 para modales */
+}
