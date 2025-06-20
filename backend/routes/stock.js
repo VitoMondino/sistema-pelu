@@ -15,8 +15,11 @@ router.get('/:id', stockController.getStockById);
 // POST /api/stock - Crear un nuevo producto en el stock
 router.post('/', stockController.createStock);
 
-// PUT /api/stock/:id - Actualizar un producto del stock
+// PUT /api/stock/:id - Actualizar un producto del stock (incluye ajuste rápido de cantidad)
 router.put('/:id', stockController.updateStock);
+
+// POST /api/stock/movimiento - Crear un nuevo movimiento de stock manual/detallado
+router.post('/movimiento', stockController.createMovimientoStock);
 
 // DELETE /api/stock/:id - Eliminar un producto del stock
 router.delete('/:id', stockController.deleteStock);

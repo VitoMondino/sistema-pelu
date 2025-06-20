@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
+import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap'; // Importar Spinner
 import { createCliente, updateCliente } from '../../api';
 
 const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
@@ -7,7 +7,8 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
         nombre: '',
         apellido: '',
         telefono: '',
-        fecha_cumpleanos: ''
+        fecha_cumpleanos: '',
+        notas: '' // Nuevo campo
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -19,11 +20,12 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
                 apellido: clienteToEdit.apellido || '',
                 telefono: clienteToEdit.telefono || '',
                 // Asegurarse que la fecha de cumpleaños esté en formato YYYY-MM-DD para el input date
-                fecha_cumpleanos: clienteToEdit.fecha_cumpleanos ? clienteToEdit.fecha_cumpleanos.split('T')[0] : ''
+                fecha_cumpleanos: clienteToEdit.fecha_cumpleanos ? clienteToEdit.fecha_cumpleanos.split('T')[0] : '',
+                notas: clienteToEdit.notas || '' // Nuevo campo
             });
         } else {
             // Reset form if no client is being edited (e.g., for creating a new one)
-            setFormData({ nombre: '', apellido: '', telefono: '', fecha_cumpleanos: '' });
+            setFormData({ nombre: '', apellido: '', telefono: '', fecha_cumpleanos: '', notas: '' }); // Nuevo campo
         }
     }, [clienteToEdit]);
 
@@ -132,6 +134,17 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
                     </Form.Group>
                 </Col>
             </Row>
+            <Form.Group className="mb-3" controlId="formNotas">
+                <Form.Label>Notas Adicionales</Form.Label>
+                <Form.Control
+                    as="textarea"
+                    rows={3}
+                    name="notas"
+                    value={formData.notas}
+                    onChange={handleChange}
+                    placeholder="Alergias, preferencias, historial relevante, etc."
+                />
+            </Form.Group>
             <div className="d-flex justify-content-end">
                 {onCancel && (
                      <Button variant="secondary" onClick={onCancel} className="me-2" disabled={loading}>
@@ -139,7 +152,11 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
                     </Button>
                 )}
                 <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? (clienteToEdit ? 'Actualizando...' : 'Creando...') : (clienteToEdit ? 'Actualizar Cliente' : 'Crear Cliente')}
+                    {loading ? (
+                        <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" /> {clienteToEdit ? 'Actualizando...' : 'Creando...'}</>
+                    ) : (
+                        clienteToEdit ? 'Actualizar Cliente' : 'Crear Cliente'
+                    )}
                 </Button>
             </div>
         </Form>

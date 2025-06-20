@@ -15,6 +15,9 @@ router.get('/proximos-cumpleanos', clienteController.getProximosCumpleanos);
 // GET /api/clientes/:id - Obtener un cliente por ID
 router.get('/:id', clienteController.getClienteById);
 
+// GET /api/clientes/:id/historial-servicios - Obtener historial de servicios de un cliente
+router.get('/:id/historial-servicios', clienteController.getHistorialServiciosByClienteId);
+
 // POST /api/clientes - Crear un nuevo cliente
 router.post('/', clienteController.createCliente);
 

@@ -4,8 +4,9 @@ import { Container, Card, Button, Modal, Alert, Toast, ToastContainer } from 're
 import StockList from '../components/stock/StockList';
 import StockForm from '../components/stock/StockForm';
 import ConfirmModal from '../components/ConfirmModal';
-import { fetchStock, deleteStockItem as apiDeleteStockItem } from '../api';
-import { PlusCircleFill } from 'react-bootstrap-icons';
+import AjusteStockModal from '../components/stock/AjusteStockModal'; // Nuevo Modal
+import { fetchStock, deleteStockItem as apiDeleteStockItem, updateStockItem } from '../api'; // updateStockItem para ajuste rápido
+import { PlusCircleFill, Sliders } from 'react-bootstrap-icons'; // Cambiados iconos
 
 const StockPage = () => {
     const [stockItems, setStockItems] = useState([]);
@@ -19,6 +20,11 @@ const StockPage = () => {
     const [itemToDeleteId, setItemToDeleteId] = useState(null);
 
     const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
+
+    // Estado para el modal de ajuste manual detallado
+    const [showAjusteManualModal, setShowAjusteManualModal] = useState(false);
+    const [itemParaAjusteManual, setItemParaAjusteManual] = useState(null);
+
 
     const cargarStock = useCallback(async () => {
         setLoading(true);
@@ -80,16 +86,50 @@ const StockPage = () => {
         }
     };
 
+    const handleAdjustQuantity = async (itemId, amount) => {
+        try {
+            await updateStockItem(itemId, { ajuste_cantidad: amount });
+            cargarStock();
+            setToastInfo({ show: true, message: `Stock ajustado para el producto ID: ${itemId}.`, variant: 'success' });
+        } catch (err) {
+            console.error("Error al ajustar cantidad:", err);
+            setToastInfo({ show: true, message: `Error al ajustar stock: ${err.response?.data?.message || err.message}`, variant: 'danger' });
+        }
+    };
+
+    const handleShowAjusteManualModal = (item = null) => { // Permite abrirlo sin item específico para un futuro
+        setItemParaAjusteManual(item); // Si es null, el modal pedirá seleccionar producto
+        setShowAjusteManualModal(true);
+    };
+
+    // Podríamos modificar StockList para que tenga un botón "Ajuste Manual" por fila
+    // o tener un botón general en la página que abra AjusteStockModal
+    // y dentro del modal se seleccione el producto si no viene pre-seleccionado.
+    // Por ahora, lo dejaremos como un botón general en la página.
+
+    const handleAjusteManualExitoso = (message) => {
+        setShowAjusteManualModal(false);
+        cargarStock();
+        setToastInfo({ show: true, message: message || 'Ajuste de stock manual realizado con éxito.', variant: 'success' });
+        setItemParaAjusteManual(null);
+    };
+
+
     return (
         <MainLayout>
             <Container fluid>
-                {error && !showFormModal && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
+                {error && !showFormModal && !showAjusteManualModal && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
 
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h1>Gestión de Stock</h1>
-                    <Button variant="primary" onClick={handleShowFormToAdd}>
-                        <PlusCircleFill className="me-2" /> Agregar Producto
-                    </Button>
+                    <div>
+                        <Button variant="outline-secondary" onClick={() => handleShowAjusteManualModal()} className="me-2">
+                            <Sliders className="me-2" /> Registrar Movimiento Manual
+                        </Button>
+                        <Button variant="primary" onClick={handleShowFormToAdd}>
+                            <PlusCircleFill className="me-2" /> Agregar Producto
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="shadow-sm">
@@ -99,6 +139,7 @@ const StockPage = () => {
                             stockItems={stockItems}
                             onEdit={handleShowFormToEdit}
                             onDelete={handleOpenConfirmDelete}
+                            onAdjustQuantity={handleAdjustQuantity} // Pasar la función de ajuste
                             loading={loading}
                             error={error && stockItems.length === 0 ? error : null}
                         />
@@ -125,6 +166,21 @@ const StockPage = () => {
                     title="Confirmar Eliminación"
                     message="¿Estás seguro de que deseas eliminar este producto del stock?"
                 />
+
+                {/* Modal para Ajuste Manual Detallado de Stock */}
+                <AjusteStockModal
+                    show={showAjusteManualModal}
+                    onHide={() => { setShowAjusteManualModal(false); setItemParaAjusteManual(null);}}
+                    producto={itemParaAjusteManual} // Puede ser null si no se selecciona uno específico de la lista
+                                                    // En ese caso, el modal debería permitir seleccionar un producto.
+                                                    // Por ahora, asumimos que si se abre es porque se seleccionó un producto (o se adaptará el modal).
+                                                    // Para un botón general, el modal necesitaría un selector de productos.
+                                                    // Vamos a asumir que este modal se invoca sin producto y el selector está DENTRO del modal.
+                                                    // O, para simplificar ahora, que SIEMPRE se llama desde un producto (ej. un botón nuevo en la lista)
+                                                    // Por ahora, el botón general no pasará producto, el modal debe manejarlo.
+                    onAjusteExitoso={handleAjusteManualExitoso}
+                />
+
 
                 <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1056 }}>
                     <Toast

@@ -45,6 +45,7 @@ export const login = (credentials) => apiClient.post('/auth/login', credentials)
 // Clientes
 export const fetchClientes = () => apiClient.get('/clientes');
 export const fetchClienteById = (id) => apiClient.get(`/clientes/${id}`);
+export const fetchHistorialServiciosByClienteId = (clienteId) => apiClient.get(`/clientes/${clienteId}/historial-servicios`);
 export const createCliente = (clienteData) => apiClient.post('/clientes', clienteData);
 export const updateCliente = (id, clienteData) => apiClient.put(`/clientes/${id}`, clienteData);
 export const deleteCliente = (id) => apiClient.delete(`/clientes/${id}`);
@@ -70,6 +71,7 @@ export const fetchStockItemById = (id) => apiClient.get(`/stock/${id}`);
 export const createStockItem = (itemData) => apiClient.post('/stock', itemData);
 export const updateStockItem = (id, itemData) => apiClient.put(`/stock/${id}`, itemData);
 export const deleteStockItem = (id) => apiClient.delete(`/stock/${id}`);
+export const createMovimientoStock = (movimientoData) => apiClient.post('/stock/movimiento', movimientoData);
 
 // WhatsApp (si se necesitan endpoints específicos desde el frontend)
 export const getWhatsappStatus = () => apiClient.get('/whatsapp/status');

@@ -4,6 +4,7 @@ import { Container, Card, Button, Modal, Alert, Toast, ToastContainer } from 're
 import ClienteList from '../components/clientes/ClienteList';
 import ClienteForm from '../components/clientes/ClienteForm';
 import ConfirmModal from '../components/ConfirmModal';
+import ClienteDetailModal from '../components/clientes/ClienteDetailModal'; // Nuevo Modal
 import { fetchClientes, deleteCliente as apiDeleteCliente } from '../api';
 import { PlusCircleFill } from 'react-bootstrap-icons';
 
@@ -17,6 +18,9 @@ const ClientesPage = () => {
 
     const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
     const [clienteToDeleteId, setClienteToDeleteId] = useState(null);
+
+    const [showDetailModal, setShowDetailModal] = useState(false); // Estado para modal de detalles
+    const [clienteToViewId, setClienteToViewId] = useState(null); // ID del cliente para ver detalles
 
     const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
 
@@ -46,6 +50,16 @@ const ClientesPage = () => {
     const handleShowFormToEdit = (cliente) => {
         setClienteToEdit(cliente);
         setShowFormModal(true);
+    };
+
+    const handleShowDetailModal = (id) => {
+        setClienteToViewId(id);
+        setShowDetailModal(true);
+    };
+
+    const handleEditFromDetail = (cliente) => {
+        setShowDetailModal(false); // Cierra el modal de detalles
+        handleShowFormToEdit(cliente); // Abre el modal de edición
     };
 
     const handleFormSuccess = (clienteGuardado) => {
@@ -100,12 +114,14 @@ const ClientesPage = () => {
                             clientes={clientes}
                             onEdit={handleShowFormToEdit}
                             onDelete={handleOpenConfirmDelete}
+                            onViewDetails={handleShowDetailModal} // Pasar la nueva función
                             loading={loading}
                             error={error && clientes.length === 0 ? error : null} // Mostrar error en la lista solo si no hay clientes
                         />
                     </Card.Body>
                 </Card>
 
+                {/* Modal para Formulario de Cliente (Crear/Editar) */}
                 <Modal show={showFormModal} onHide={() => { setShowFormModal(false); setClienteToEdit(null); setError(''); }} centered size="lg">
                     <Modal.Header closeButton>
                         <Modal.Title>{clienteToEdit ? 'Editar' : 'Agregar'} Cliente</Modal.Title>
@@ -127,6 +143,14 @@ const ClientesPage = () => {
                     message={`¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer. Se eliminarán también los turnos asociados.`}
                     confirmButtonText="Eliminar"
                     confirmVariant="danger"
+                />
+
+                {/* Modal para Detalles de Cliente */}
+                <ClienteDetailModal
+                    show={showDetailModal}
+                    onHide={() => setShowDetailModal(false)}
+                    clienteId={clienteToViewId}
+                    onEditCliente={handleEditFromDetail} // Para poder editar desde el modal de detalles
                 />
 
                 <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1056 }}>
