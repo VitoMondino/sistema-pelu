@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
+import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap'; // Importar Spinner
 import { createTurno, updateTurno, fetchClientes, fetchServicios } from '../../api';
 
 const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
@@ -165,7 +165,11 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
                     </Button>
                 )}
                 <Button variant="primary" type="submit" disabled={loading || loadingDependencies}>
-                    {loading ? (turnoToEdit ? 'Actualizando...' : 'Agendando...') : (turnoToEdit ? 'Actualizar Turno' : 'Agendar Turno')}
+                    {loading ? (
+                        <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" /> {turnoToEdit ? 'Actualizando...' : 'Agendando...'}</>
+                    ) : (
+                        turnoToEdit ? 'Actualizar Turno' : 'Agendar Turno'
+                    )}
                 </Button>
             </div>
         </Form>

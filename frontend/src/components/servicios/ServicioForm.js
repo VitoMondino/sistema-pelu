@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
+import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap'; // Importar Spinner
 import { createServicio, updateServicio } from '../../api';
 
 const ServicioForm = ({ servicioToEdit, onFormSubmit, onCancel }) => {
@@ -108,7 +108,11 @@ const ServicioForm = ({ servicioToEdit, onFormSubmit, onCancel }) => {
                     </Button>
                 )}
                 <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? (servicioToEdit ? 'Actualizando...' : 'Creando...') : (servicioToEdit ? 'Actualizar Servicio' : 'Crear Servicio')}
+                    {loading ? (
+                        <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" /> {servicioToEdit ? 'Actualizando...' : 'Creando...'}</>
+                    ) : (
+                        servicioToEdit ? 'Actualizar Servicio' : 'Crear Servicio'
+                    )}
                 </Button>
             </div>
         </Form>

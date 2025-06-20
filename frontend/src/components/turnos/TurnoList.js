@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react'; // Importar memo
 import { Table, Button, Alert, Badge } from 'react-bootstrap';
 import { PencilSquare, TrashFill, CalendarEventFill, PersonFill, Scissors } from 'react-bootstrap-icons';
 
-const TurnoList = ({ turnos, onEdit, onDelete, loading, error }) => {
+const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // Envolver con memo
     if (loading) {
         return (
             <div className="d-flex justify-content-center my-3">

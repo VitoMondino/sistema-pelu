@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Row, Col } from 'react-bootstrap';
+import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap'; // Importar Spinner
 import { createStockItem, updateStockItem } from '../../api';
 
 const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
@@ -7,7 +7,8 @@ const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
         nombre_producto: '',
         cantidad: '',
         precio_unitario: '',
-        precio_venta: ''
+        precio_venta: '',
+        stock_minimo: '' // Nuevo campo
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -18,10 +19,11 @@ const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
                 nombre_producto: itemToEdit.nombre_producto || '',
                 cantidad: itemToEdit.cantidad || '',
                 precio_unitario: itemToEdit.precio_unitario || '',
-                precio_venta: itemToEdit.precio_venta || ''
+                precio_venta: itemToEdit.precio_venta || '',
+                stock_minimo: itemToEdit.stock_minimo || '0' // Nuevo campo, default 0 si no existe
             });
         } else {
-            setFormData({ nombre_producto: '', cantidad: '', precio_unitario: '', precio_venta: '' });
+            setFormData({ nombre_producto: '', cantidad: '', precio_unitario: '', precio_venta: '', stock_minimo: '0' }); // Default 0
         }
     }, [itemToEdit]);
 
@@ -35,7 +37,7 @@ const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
         setError('');
         setLoading(true);
 
-        if (!formData.nombre_producto || formData.cantidad === '' || formData.precio_unitario === '' || formData.precio_venta === '') {
+        if (!formData.nombre_producto || formData.cantidad === '' || formData.precio_unitario === '' || formData.precio_venta === '' || formData.stock_minimo === '') {
             setError('Todos los campos son requeridos.');
             setLoading(false);
             return;
@@ -60,14 +62,19 @@ const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
             setLoading(false);
             return;
         }
-
+        if (isNaN(parseInt(formData.stock_minimo)) || parseInt(formData.stock_minimo) < 0) {
+            setError('El stock mínimo debe ser un número entero no negativo.');
+            setLoading(false);
+            return;
+        }
 
         try {
             const dataToSend = {
                 ...formData,
                 cantidad: parseInt(formData.cantidad),
                 precio_unitario: parseFloat(formData.precio_unitario),
-                precio_venta: parseFloat(formData.precio_venta)
+                precio_venta: parseFloat(formData.precio_venta),
+                stock_minimo: parseInt(formData.stock_minimo) // Nuevo campo
             };
 
             let response;
@@ -149,6 +156,19 @@ const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
                     </Form.Group>
                 </Col>
             </Row>
+            <Form.Group className="mb-3" controlId="formStockMinimo">
+                <Form.Label>Stock Mínimo <span className="text-danger">*</span></Form.Label>
+                <Form.Control
+                    type="number"
+                    name="stock_minimo"
+                    value={formData.stock_minimo}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    step="1"
+                    placeholder="Ej: 5"
+                />
+            </Form.Group>
 
             <div className="d-flex justify-content-end">
                 {onCancel && (
@@ -157,7 +177,11 @@ const StockForm = ({ itemToEdit, onFormSubmit, onCancel }) => {
                     </Button>
                 )}
                 <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? (itemToEdit ? 'Actualizando...' : 'Agregando...') : (itemToEdit ? 'Actualizar Producto' : 'Agregar Producto')}
+                    {loading ? (
+                        <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" /> {itemToEdit ? 'Actualizando...' : 'Agregando...'}</>
+                    ) : (
+                        itemToEdit ? 'Actualizar Producto' : 'Agregar Producto'
+                    )}
                 </Button>
             </div>
         </Form>

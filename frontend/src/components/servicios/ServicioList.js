@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react'; // Importar memo
 import { Table, Button, Alert } from 'react-bootstrap';
 import { PencilSquare, TrashFill } from 'react-bootstrap-icons';
 
-const ServicioList = ({ servicios, onEdit, onDelete, loading, error }) => {
+const ServicioList = memo(({ servicios, onEdit, onDelete, loading, error }) => { // Envolver con memo
     if (loading) {
         return (
             <div className="d-flex justify-content-center my-3">

@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react'; // Importar memo
 import { Table, Button, Alert } from 'react-bootstrap';
-import { PencilSquare, TrashFill } from 'react-bootstrap-icons';
+import { PencilSquare, TrashFill, EyeFill } from 'react-bootstrap-icons';
 
-const ClienteList = ({ clientes, onEdit, onDelete, loading, error }) => {
+const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, error }) => { // Envolver con memo
     if (loading) {
         return (
             <div className="d-flex justify-content-center my-3">
@@ -56,6 +56,15 @@ const ClienteList = ({ clientes, onEdit, onDelete, loading, error }) => {
                         <td>{cliente.telefono}</td>
                         <td>{formatDate(cliente.fecha_cumpleanos)}</td>
                         <td>
+                            <Button
+                                variant="outline-info"
+                                size="sm"
+                                onClick={() => onViewDetails(cliente.id)}
+                                className="me-2"
+                                title="Ver Detalles"
+                            >
+                                <EyeFill />
+                            </Button>
                             <Button
                                 variant="outline-primary"
                                 size="sm"

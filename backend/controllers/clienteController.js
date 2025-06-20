@@ -3,7 +3,7 @@ const db = require('../db');
 // Obtener todos los clientes
 async function getAllClientes(req, res, next) {
   try {
-    const rows = await db.query('SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos FROM clientes');
+    const rows = await db.query('SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, notas FROM clientes');
     res.json(rows);
   } catch (error) {
     next(error);
@@ -14,7 +14,7 @@ async function getAllClientes(req, res, next) {
 async function getClienteById(req, res, next) {
   const { id } = req.params;
   try {
-    const rows = await db.query('SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos FROM clientes WHERE id = ?', [id]);
+    const rows = await db.query('SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, notas FROM clientes WHERE id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
@@ -26,17 +26,17 @@ async function getClienteById(req, res, next) {
 
 // Crear un nuevo cliente
 async function createCliente(req, res, next) {
-  const { nombre, apellido, telefono, fecha_cumpleanos } = req.body;
+  const { nombre, apellido, telefono, fecha_cumpleanos, notas } = req.body; // Añadido notas
   if (!nombre || !apellido || !telefono) {
     return res.status(400).json({ message: 'Nombre, apellido y teléfono son requeridos.' });
   }
 
   try {
     const result = await db.query(
-      'INSERT INTO clientes (nombre, apellido, telefono, fecha_cumpleanos) VALUES (?, ?, ?, ?)',
-      [nombre, apellido, telefono, fecha_cumpleanos || null]
+      'INSERT INTO clientes (nombre, apellido, telefono, fecha_cumpleanos, notas) VALUES (?, ?, ?, ?, ?)', // Añadido notas
+      [nombre, apellido, telefono, fecha_cumpleanos || null, notas || null] // Añadido notas
     );
-    res.status(201).json({ message: 'Cliente creado con éxito!', id: result.insertId, nombre, apellido, telefono, fecha_cumpleanos });
+    res.status(201).json({ message: 'Cliente creado con éxito!', id: result.insertId, nombre, apellido, telefono, fecha_cumpleanos, notas }); // Añadido notas
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ message: 'El número de teléfono ya está registrado.' });
@@ -48,7 +48,7 @@ async function createCliente(req, res, next) {
 // Actualizar un cliente
 async function updateCliente(req, res, next) {
   const { id } = req.params;
-  const { nombre, apellido, telefono, fecha_cumpleanos } = req.body;
+  const { nombre, apellido, telefono, fecha_cumpleanos, notas } = req.body; // Añadido notas
 
   if (!nombre || !apellido || !telefono) {
     return res.status(400).json({ message: 'Nombre, apellido y teléfono son requeridos.' });
@@ -56,13 +56,13 @@ async function updateCliente(req, res, next) {
 
   try {
     const result = await db.query(
-      'UPDATE clientes SET nombre = ?, apellido = ?, telefono = ?, fecha_cumpleanos = ? WHERE id = ?',
-      [nombre, apellido, telefono, fecha_cumpleanos || null, id]
+      'UPDATE clientes SET nombre = ?, apellido = ?, telefono = ?, fecha_cumpleanos = ?, notas = ? WHERE id = ?', // Añadido notas
+      [nombre, apellido, telefono, fecha_cumpleanos || null, notas || null, id] // Añadido notas
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Cliente no encontrado para actualizar' });
     }
-    res.json({ message: 'Cliente actualizado con éxito!', id, nombre, apellido, telefono, fecha_cumpleanos });
+    res.json({ message: 'Cliente actualizado con éxito!', id, nombre, apellido, telefono, fecha_cumpleanos, notas }); // Añadido notas
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ message: 'El número de teléfono ya está registrado para otro cliente.' });
@@ -92,8 +92,46 @@ module.exports = {
   createCliente,
   updateCliente,
   deleteCliente,
-  getProximosCumpleanos, // Nueva función exportada
+  getProximosCumpleanos,
+  getHistorialServiciosByClienteId, // Nueva función exportada
 };
+
+// Obtener historial de servicios de un cliente por ID de cliente
+async function getHistorialServiciosByClienteId(req, res, next) {
+  const { id } = req.params; // ID del cliente
+  try {
+    // Primero verificar si el cliente existe
+    const cliente = await db.query('SELECT id FROM clientes WHERE id = ?', [id]);
+    if (cliente.length === 0) {
+      return res.status(404).json({ message: 'Cliente no encontrado' });
+    }
+
+    const query = `
+      SELECT
+        t.id as turno_id,
+        t.fecha_hora,
+        t.estado as estado_turno,
+        s.id as servicio_id,
+        s.nombre_servicio,
+        s.precio as precio_servicio
+      FROM turnos t
+      JOIN servicios s ON t.servicio_id = s.id
+      WHERE t.cliente_id = ?
+      ORDER BY t.fecha_hora DESC
+    `;
+    const historial = await db.query(query, [id]);
+
+    // Formatear la fecha_hora a ISO string para consistencia
+    const historialFormateado = historial.map(item => ({
+        ...item,
+        fecha_hora: new Date(item.fecha_hora).toISOString()
+    }));
+
+    res.json(historialFormateado);
+  } catch (error) {
+    next(error);
+  }
+}
 
 // Obtener clientes con cumpleaños próximos (ej. en los próximos 7 días)
 async function getProximosCumpleanos(req, res, next) {
