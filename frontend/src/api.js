@@ -62,7 +62,7 @@ export const deleteServicio = (id) => apiClient.delete(`/servicios/${id}`);
 export const fetchTurnos = () => apiClient.get('/turnos');
 export const fetchTurnoById = (id) => apiClient.get(`/turnos/${id}`);
 export const createTurno = (turnoData) => apiClient.post('/turnos', turnoData);
-export const updateTurno = (id, turnoData) => apiClient.put(`/turnos/${id}`, turnoData);
+export const updateTurno = (id, turnoData) => apiClient.put(`/turnos/${id}`, turnoData); // Ya existía, lo usaré para reprogramar
 export const deleteTurno = (id) => apiClient.delete(`/turnos/${id}`);
 
 // Stock

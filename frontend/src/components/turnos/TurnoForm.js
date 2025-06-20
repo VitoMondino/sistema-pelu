@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap'; // Importar Spinner
+import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap';
 import { createTurno, updateTurno, fetchClientes, fetchServicios } from '../../api';
-
-const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
+import { esHorarioLaborable, DURACION_SLOT_MINUTOS } from '../../utils/horariosConfig'; // Importar validadores
     const [formData, setFormData] = useState({
         cliente_id: '',
         servicio_id: '',
@@ -72,11 +71,15 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
             return;
         }
 
-        // Convertir fecha_hora local a ISO string (UTC) para enviar al backend
-        // El backend espera un formato que MySQL pueda interpretar, como 'YYYY-MM-DD HH:MM:SS' o ISO string
-        // El input datetime-local devuelve "YYYY-MM-DDTHH:MM" en tiempo local.
-        // Lo convertimos a un objeto Date y luego a ISO string.
-        const fechaHoraISO = new Date(formData.fecha_hora).toISOString();
+        const fechaSeleccionada = new Date(formData.fecha_hora);
+
+        if (!esHorarioLaborable(fechaSeleccionada)) {
+            setError(`Horario no válido. Laborables: Lu-Vi de 10:00 a 23:00 (slots cada ${DURACION_SLOT_MINUTOS} min), Sáb de 08:00 a 15:00 (slots cada ${DURACION_SLOT_MINUTOS} min). Domingos cerrado.`);
+            setLoading(false);
+            return;
+        }
+
+        const fechaHoraISO = fechaSeleccionada.toISOString();
 
         try {
             const dataToSend = {
@@ -143,7 +146,11 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
                             value={formData.fecha_hora}
                             onChange={handleChange}
                             required
+                            step={DURACION_SLOT_MINUTOS * 60} // Para que el input de tiempo salte en bloques de 30 min
                         />
+                        <Form.Text className="text-muted">
+                            Lu-Vi: 10:00-23:00, Sáb: 08:00-15:00. Slots cada {DURACION_SLOT_MINUTOS} min.
+                        </Form.Text>
                     </Form.Group>
                 </Col>
                 <Col md={6}>
