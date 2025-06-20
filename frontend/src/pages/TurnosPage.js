@@ -5,7 +5,7 @@ import TurnoList from '../components/turnos/TurnoList';
 import TurnoForm from '../components/turnos/TurnoForm';
 import ConfirmModal from '../components/ConfirmModal';
 import { fetchTurnos, deleteTurno as apiDeleteTurno } from '../api';
-import { PlusCircleFill, FunnelFill } from 'react-bootstrap-icons';
+import { PlusCircleFill } from 'react-bootstrap-icons'; // Eliminado FunnelFill
 
 const TurnosPage = () => {
     const [turnos, setTurnos] = useState([]);
