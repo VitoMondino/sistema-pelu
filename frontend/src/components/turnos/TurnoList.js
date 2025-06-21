@@ -1,8 +1,8 @@
-import React, { memo } from 'react'; // Importar memo
+import React, { memo } from 'react';
 import { Table, Button, Alert, Badge } from 'react-bootstrap';
-import { PencilSquare, TrashFill, CalendarEventFill, PersonFill, Scissors } from 'react-bootstrap-icons';
+import { PencilSquare, TrashFill, CalendarEventFill, PersonFill, Scissors, Whatsapp } from 'react-bootstrap-icons'; // Corregí acá la importación
 
-const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // Envolver con memo
+const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => {
     if (loading) {
         return (
             <div className="d-flex justify-content-center my-3">
@@ -30,7 +30,6 @@ const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // En
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
-            // timeZone: 'America/Argentina/Buenos_Aires' // Opcional, si quieres forzar una zona horaria específica en la visualización
         });
     };
 
@@ -47,6 +46,12 @@ const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // En
         }
     };
 
+    // Función para abrir WhatsApp con mensaje personalizado
+    const enviarWhatsApp = (telefono, nombre, fechaHora) => {
+        const texto = encodeURIComponent(`Hola ${nombre}, te recordamos que tienes un turno registrado para el día ${fechaHora}. ¡Saludos!`);
+        const url = `https://wa.me/${telefono}?text=${texto}`;
+        window.open(url, '_blank');
+    };
 
     return (
         <Table striped bordered hover responsive className="mt-3 align-middle">
@@ -85,9 +90,22 @@ const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // En
                                 size="sm"
                                 onClick={() => onDelete(turno.id)}
                                 title="Eliminar Turno"
+                                className="me-2"
                             >
                                 <TrashFill />
                             </Button>
+
+                            {/* Botón WhatsApp para enviar recordatorio */}
+                            {turno.cliente_telefono && (
+                                <Button
+                                    variant="outline-success"
+                                    size="sm"
+                                    onClick={() => enviarWhatsApp(turno.cliente_telefono, `${turno.cliente_nombre}`, formatDateTime(turno.fecha_hora))}
+                                    title="Recordar turno por WhatsApp"
+                                >
+                                    <Whatsapp />
+                                </Button>
+                            )}
                         </td>
                     </tr>
                 ))}
@@ -95,5 +113,5 @@ const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // En
         </Table>
     );
 });
-// TurnoList.js
+
 export default TurnoList;

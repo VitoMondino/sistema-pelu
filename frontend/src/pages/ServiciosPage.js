@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../components/MainLayout';
-import { Container, Card, Button, Modal, Alert, Toast, ToastContainer } from 'react-bootstrap';
+import {
+  Container,
+  Card,
+  Button,
+  Modal,
+  Alert,
+  Toast,
+  ToastContainer,
+} from 'react-bootstrap';
 import ServicioList from '../components/servicios/ServicioList';
 import ServicioForm from '../components/servicios/ServicioForm';
 import ConfirmModal from '../components/ConfirmModal';
@@ -11,13 +19,10 @@ const ServiciosPage = () => {
   const [servicios, setServicios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [showFormModal, setShowFormModal] = useState(false);
   const [servicioToEdit, setServicioToEdit] = useState(null);
-
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [servicioToDeleteId, setServicioToDeleteId] = useState(null);
-
   const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
 
   const cargarServicios = useCallback(async () => {
@@ -27,7 +32,6 @@ const ServiciosPage = () => {
       const response = await fetchServicios();
       setServicios(response.data);
     } catch (err) {
-      console.error('Error al cargar servicios:', err);
       setError(err.response?.data?.message || err.message || 'Error al cargar servicios.');
     } finally {
       setLoading(false);
@@ -42,12 +46,10 @@ const ServiciosPage = () => {
     setServicioToEdit(null);
     setShowFormModal(true);
   };
-
   const handleShowFormToEdit = (servicio) => {
     setServicioToEdit(servicio);
     setShowFormModal(true);
   };
-
   const handleFormSuccess = (servicioGuardado) => {
     setShowFormModal(false);
     cargarServicios();
@@ -60,12 +62,10 @@ const ServiciosPage = () => {
     });
     setServicioToEdit(null);
   };
-
   const handleOpenConfirmDelete = (id) => {
     setServicioToDeleteId(id);
     setShowConfirmDeleteModal(true);
   };
-
   const handleDeleteServicio = async () => {
     if (!servicioToDeleteId) return;
     try {
@@ -75,31 +75,69 @@ const ServiciosPage = () => {
       cargarServicios();
       setToastInfo({ show: true, message: 'Servicio eliminado con éxito.', variant: 'success' });
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Error al eliminar el servicio.';
-      setError(errorMessage);
+      setError(err.response?.data?.message || err.message || 'Error al eliminar el servicio.');
       setShowConfirmDeleteModal(false);
-      setToastInfo({ show: true, message: errorMessage, variant: 'danger' });
+      setToastInfo({ show: true, message: 'Error al eliminar el servicio.', variant: 'danger' });
     }
+  };
+
+  // 🎨 Estilos
+  const styles = {
+    container: {
+      padding: '2rem',
+      backgroundColor: '#f7f7f7',
+      minHeight: '100vh',
+    },
+    headerRow: {
+      borderBottom: '2px solid #ddd',
+      paddingBottom: '1rem',
+      marginBottom: '1.5rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    title: {
+      fontWeight: '600',
+      color: '#333',
+      letterSpacing: '0.5px',
+    },
+    card: {
+      borderRadius: '1rem',
+      border: 'none',
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+    },
+    cardHeader: {
+      backgroundColor: 'transparent',
+      borderBottom: '1px solid #eee',
+      padding: '1rem',
+      fontWeight: 500,
+      color: '#555',
+    },
+    addButton: {
+      borderRadius: '2rem',
+      padding: '0.5rem 1.2rem',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.08)',
+    },
   };
 
   return (
     <MainLayout>
-      <Container fluid className="py-4">
+      <Container fluid style={styles.container}>
         {error && (
           <Alert variant="danger" dismissible onClose={() => setError('')} className="mb-4">
             {error}
           </Alert>
         )}
 
-        <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-          <h1 className="h3 text-uppercase text-secondary">Gestión de Servicios</h1>
-          <Button variant="primary" onClick={handleShowFormToAdd} className="shadow-sm">
+        <div style={styles.headerRow}>
+          <h1 style={styles.title}>Gestión de Servicios</h1>
+          <Button variant="primary" onClick={handleShowFormToAdd} style={styles.addButton}>
             <PlusCircleFill className="me-2" /> Agregar Servicio
           </Button>
         </div>
 
-        <Card className="shadow-sm">
-          <Card.Header className="bg-light text-muted small text-uppercase">Listado de Servicios</Card.Header>
+        <Card style={styles.card}>
+          <Card.Header style={styles.cardHeader}>Listado de Servicios</Card.Header>
           <Card.Body>
             <ServicioList
               servicios={servicios}
@@ -111,6 +149,7 @@ const ServiciosPage = () => {
           </Card.Body>
         </Card>
 
+        {/* Modal de Formulario */}
         <Modal
           show={showFormModal}
           onHide={() => {
@@ -136,6 +175,7 @@ const ServiciosPage = () => {
           </Modal.Body>
         </Modal>
 
+        {/* Modal de Confirmación */}
         <ConfirmModal
           show={showConfirmDeleteModal}
           onHide={() => setShowConfirmDeleteModal(false)}
@@ -144,6 +184,7 @@ const ServiciosPage = () => {
           message="¿Estás seguro de que deseas eliminar este servicio? Si el servicio tiene turnos asociados, no se podrá eliminar hasta que sean cancelados o reasignados."
         />
 
+        {/* Toast de Notificación */}
         <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1056 }}>
           <Toast
             onClose={() => setToastInfo((prev) => ({ ...prev, show: false }))}
