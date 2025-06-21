@@ -140,6 +140,6 @@ const StockList = memo(({ stockItems, onEdit, onDelete, onAdjustQuantity, loadin
             </Modal>
         </>
     );
-};
+});
 
 export default StockList;

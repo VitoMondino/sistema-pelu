@@ -94,6 +94,6 @@ const TurnoList = memo(({ turnos, onEdit, onDelete, loading, error }) => { // En
             </tbody>
         </Table>
     );
-};
-
+});
+// TurnoList.js
 export default TurnoList;

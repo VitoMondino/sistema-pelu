@@ -29,7 +29,7 @@ const ServicioList = memo(({ servicios, onEdit, onDelete, loading, error }) => {
         <Table striped bordered hover responsive className="mt-3">
             <thead className="table-dark">
                 <tr>
-                    <th>#</th>
+                    <th>Cant. servicios</th>
                     <th>Nombre del Servicio</th>
                     <th>Precio</th>
                     <th>Acciones</th>
@@ -65,6 +65,7 @@ const ServicioList = memo(({ servicios, onEdit, onDelete, loading, error }) => {
             </tbody>
         </Table>
     );
-};
+});
+// ServicioList.js
 
 export default ServicioList;
