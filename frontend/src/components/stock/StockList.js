@@ -1,5 +1,5 @@
 import React, { useState, memo } from 'react'; // Importar memo
-import { Table, Button, Alert, Badge, ButtonGroup, Form, InputGroup, Modal } from 'react-bootstrap';
+import { Table, Button, Alert, Badge, ButtonGroup, Form, Modal } from 'react-bootstrap';
 import { PencilSquare, TrashFill, BoxSeamFill, CashCoin, GraphUp, PlusLg, DashLg } from 'react-bootstrap-icons';
 
 const StockList = memo(({ stockItems, onEdit, onDelete, onAdjustQuantity, loading, error }) => { // Envolver con memo
