@@ -23,6 +23,20 @@ const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, 
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
+    
+    // Si la fecha viene en formato YYYY-MM-DD, creamos la fecha manualmente
+    // para evitar problemas de zona horaria
+    if (dateString.includes('-') && dateString.length === 10) {
+      const [year, month, day] = dateString.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    }
+    
+    // Para otros formatos, usar el constructor normal
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       day: '2-digit',

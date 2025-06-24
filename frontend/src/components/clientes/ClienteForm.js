@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap'; // Importar Spinner
+import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap';
 import { createCliente, updateCliente } from '../../api';
 
 const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
@@ -8,10 +8,44 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
         apellido: '',
         telefono: '',
         fecha_cumpleanos: '',
-        notas: '' // Nuevo campo
+        notas: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Función para formatear fecha evitando problemas de zona horaria
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        
+        // Si la fecha ya está en formato YYYY-MM-DD, la devolvemos tal como está
+        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Si es una fecha ISO o con hora, extraemos solo la parte de la fecha
+        if (typeof dateString === 'string' && dateString.includes('T')) {
+            return dateString.split('T')[0];
+        }
+        
+        // Si es un objeto Date o string de fecha, lo convertimos cuidadosamente
+        try {
+            const date = new Date(dateString);
+            // Verificamos que la fecha sea válida
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            
+            // Usamos los métodos locales para evitar problemas de zona horaria
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        } catch (e) {
+            console.error('Error al formatear fecha:', e);
+            return '';
+        }
+    };
 
     useEffect(() => {
         if (clienteToEdit) {
@@ -19,13 +53,18 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
                 nombre: clienteToEdit.nombre || '',
                 apellido: clienteToEdit.apellido || '',
                 telefono: clienteToEdit.telefono || '',
-                // Asegurarse que la fecha de cumpleaños esté en formato YYYY-MM-DD para el input date
-                fecha_cumpleanos: clienteToEdit.fecha_cumpleanos ? clienteToEdit.fecha_cumpleanos.split('T')[0] : '',
-                notas: clienteToEdit.notas || '' // Nuevo campo
+                fecha_cumpleanos: formatDateForInput(clienteToEdit.fecha_cumpleanos),
+                notas: clienteToEdit.notas || ''
             });
         } else {
-            // Reset form if no client is being edited (e.g., for creating a new one)
-            setFormData({ nombre: '', apellido: '', telefono: '', fecha_cumpleanos: '', notas: '' }); // Nuevo campo
+            // Reset form if no client is being edited
+            setFormData({ 
+                nombre: '', 
+                apellido: '', 
+                telefono: '', 
+                fecha_cumpleanos: '', 
+                notas: '' 
+            });
         }
     }, [clienteToEdit]);
 
@@ -45,7 +84,7 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
             return;
         }
 
-        // Validación simple de teléfono (ej: solo números y longitud)
+        // Validación simple de teléfono
         if (!/^\d{7,15}$/.test(formData.telefono.replace(/\s+/g, ''))) {
             setError('El teléfono debe contener solo números y tener entre 7 y 15 dígitos.');
             setLoading(false);
@@ -55,8 +94,9 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
         try {
             let response;
             const dataToSend = { ...formData };
-            // Si fecha_cumpleanos está vacío, no lo enviamos o lo enviamos como null
-            if (!dataToSend.fecha_cumpleanos) {
+            
+            // Si fecha_cumpleanos está vacío, lo enviamos como null
+            if (!dataToSend.fecha_cumpleanos || dataToSend.fecha_cumpleanos.trim() === '') {
                 dataToSend.fecha_cumpleanos = null;
             }
 
@@ -68,7 +108,7 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
 
             setLoading(false);
             if (response.data) {
-                onFormSubmit(response.data); // Pasar el cliente creado/actualizado
+                onFormSubmit(response.data);
             }
         } catch (err) {
             setLoading(false);
@@ -113,7 +153,7 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
                     <Form.Group className="mb-3" controlId="formTelefono">
                         <Form.Label>Teléfono <span className="text-danger">*</span></Form.Label>
                         <Form.Control
-                            type="tel" // Usar type="tel" para mejor semántica y UX en móviles
+                            type="tel"
                             name="telefono"
                             value={formData.telefono}
                             onChange={handleChange}

@@ -4,7 +4,7 @@ import { Container, Card, Button, Modal, Alert, Toast, ToastContainer } from 're
 import ClienteList from '../components/clientes/ClienteList';
 import ClienteForm from '../components/clientes/ClienteForm';
 import ConfirmModal from '../components/ConfirmModal';
-import ClienteDetailModal from '../components/clientes/ClienteDetailModal'; // Nuevo Modal
+import ClienteDetailModal from '../components/clientes/ClienteDetailModal';
 import { fetchClientes, deleteCliente as apiDeleteCliente } from '../api';
 import { PlusCircleFill } from 'react-bootstrap-icons';
 
@@ -19,8 +19,8 @@ const ClientesPage = () => {
     const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
     const [clienteToDeleteId, setClienteToDeleteId] = useState(null);
 
-    const [showDetailModal, setShowDetailModal] = useState(false); // Estado para modal de detalles
-    const [clienteToViewId, setClienteToViewId] = useState(null); // ID del cliente para ver detalles
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [clienteToViewId, setClienteToViewId] = useState(null);
 
     const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
 
@@ -44,11 +44,35 @@ const ClientesPage = () => {
 
     const handleShowFormToAdd = () => {
         setClienteToEdit(null);
+        setError('');
         setShowFormModal(true);
     };
 
     const handleShowFormToEdit = (cliente) => {
-        setClienteToEdit(cliente);
+        // Formatear la fecha correctamente evitando problemas de zona horaria
+        const formatDateForEdit = (dateString) => {
+            if (!dateString) return '';
+            
+            // Si ya está en formato YYYY-MM-DD, devolverla tal como está
+            if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                return dateString;
+            }
+            
+            // Si tiene formato ISO o con hora, extraer solo la fecha
+            if (typeof dateString === 'string' && dateString.includes('T')) {
+                return dateString.split('T')[0];
+            }
+            
+            return '';
+        };
+
+        const clienteParaEditar = {
+            ...cliente,
+            fecha_cumpleanos: formatDateForEdit(cliente.fecha_cumpleanos)
+        };
+        
+        setClienteToEdit(clienteParaEditar);
+        setError('');
         setShowFormModal(true);
     };
 
@@ -58,19 +82,28 @@ const ClientesPage = () => {
     };
 
     const handleEditFromDetail = (cliente) => {
-        setShowDetailModal(false); // Cierra el modal de detalles
-        handleShowFormToEdit(cliente); // Abre el modal de edición
+        setShowDetailModal(false);
+        handleShowFormToEdit(cliente);
     };
 
     const handleFormSuccess = (clienteGuardado) => {
         setShowFormModal(false);
-        cargarClientes(); // Recargar la lista
+        cargarClientes();
         setToastInfo({
             show: true,
-            message: clienteToEdit ? `Cliente "${clienteGuardado.nombre} ${clienteGuardado.apellido}" actualizado con éxito.` : `Cliente "${clienteGuardado.nombre} ${clienteGuardado.apellido}" creado con éxito.`,
+            message: clienteToEdit 
+                ? `Cliente "${clienteGuardado.nombre} ${clienteGuardado.apellido}" actualizado con éxito.` 
+                : `Cliente "${clienteGuardado.nombre} ${clienteGuardado.apellido}" creado con éxito.`,
             variant: 'success'
         });
         setClienteToEdit(null);
+        setError('');
+    };
+
+    const handleFormCancel = () => {
+        setShowFormModal(false);
+        setClienteToEdit(null);
+        setError('');
     };
 
     const handleOpenConfirmDelete = (id) => {
@@ -84,21 +117,37 @@ const ClientesPage = () => {
             await apiDeleteCliente(clienteToDeleteId);
             setShowConfirmDeleteModal(false);
             setClienteToDeleteId(null);
-            cargarClientes(); // Recargar lista
-            setToastInfo({ show: true, message: 'Cliente eliminado con éxito.', variant: 'success' });
+            cargarClientes();
+            setToastInfo({ 
+                show: true, 
+                message: 'Cliente eliminado con éxito.', 
+                variant: 'success' 
+            });
         } catch (err) {
             console.error("Error al eliminar cliente:", err);
-            setError(err.response?.data?.message || err.message || 'Error al eliminar el cliente.');
-            setShowConfirmDeleteModal(false); // Cerrar modal incluso si hay error
-            setToastInfo({ show: true, message: `Error al eliminar cliente: ${err.response?.data?.message || err.message}`, variant: 'danger' });
+            const errorMessage = err.response?.data?.message || err.message || 'Error al eliminar el cliente.';
+            setError(errorMessage);
+            setShowConfirmDeleteModal(false);
+            setToastInfo({ 
+                show: true, 
+                message: `Error al eliminar cliente: ${errorMessage}`, 
+                variant: 'danger' 
+            });
         }
     };
 
+    const handleCloseToast = () => {
+        setToastInfo(prev => ({ ...prev, show: false }));
+    };
 
     return (
         <MainLayout>
             <Container fluid>
-                {error && !showFormModal && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
+                {error && !showFormModal && (
+                    <Alert variant="danger" onClose={() => setError('')} dismissible>
+                        {error}
+                    </Alert>
+                )}
 
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h1>Gestión de Clientes</h1>
@@ -114,15 +163,21 @@ const ClientesPage = () => {
                             clientes={clientes}
                             onEdit={handleShowFormToEdit}
                             onDelete={handleOpenConfirmDelete}
-                            onViewDetails={handleShowDetailModal} // Pasar la nueva función
+                            onViewDetails={handleShowDetailModal}
                             loading={loading}
-                            error={error && clientes.length === 0 ? error : null} // Mostrar error en la lista solo si no hay clientes
+                            error={error && clientes.length === 0 ? error : null}
                         />
                     </Card.Body>
                 </Card>
 
                 {/* Modal para Formulario de Cliente (Crear/Editar) */}
-                <Modal show={showFormModal} onHide={() => { setShowFormModal(false); setClienteToEdit(null); setError(''); }} centered size="lg">
+                <Modal 
+                    show={showFormModal} 
+                    onHide={handleFormCancel} 
+                    centered 
+                    size="lg"
+                    backdrop="static"
+                >
                     <Modal.Header closeButton>
                         <Modal.Title>{clienteToEdit ? 'Editar' : 'Agregar'} Cliente</Modal.Title>
                     </Modal.Header>
@@ -130,17 +185,18 @@ const ClientesPage = () => {
                         <ClienteForm
                             clienteToEdit={clienteToEdit}
                             onFormSubmit={handleFormSuccess}
-                            onCancel={() => { setShowFormModal(false); setClienteToEdit(null); setError(''); }}
+                            onCancel={handleFormCancel}
                         />
                     </Modal.Body>
                 </Modal>
 
+                {/* Modal de confirmación para eliminar */}
                 <ConfirmModal
                     show={showConfirmDeleteModal}
                     onHide={() => setShowConfirmDeleteModal(false)}
                     onConfirm={handleDeleteCliente}
                     title="Confirmar Eliminación"
-                    message={`¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer. Se eliminarán también los turnos asociados.`}
+                    message="¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer. Se eliminarán también los turnos asociados."
                     confirmButtonText="Eliminar"
                     confirmVariant="danger"
                 />
@@ -150,12 +206,13 @@ const ClientesPage = () => {
                     show={showDetailModal}
                     onHide={() => setShowDetailModal(false)}
                     clienteId={clienteToViewId}
-                    onEditCliente={handleEditFromDetail} // Para poder editar desde el modal de detalles
+                    onEditCliente={handleEditFromDetail}
                 />
 
+                {/* Toast de notificaciones */}
                 <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1056 }}>
                     <Toast
-                        onClose={() => setToastInfo(prev => ({ ...prev, show: false }))}
+                        onClose={handleCloseToast}
                         show={toastInfo.show}
                         delay={5000}
                         autohide
