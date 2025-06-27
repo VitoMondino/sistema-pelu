@@ -2,7 +2,8 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Navbar, Nav, Container, Button, Offcanvas, NavDropdown } from 'react-bootstrap';
-import { HouseDoorFill, PeopleFill, CalendarCheckFill, BoxFill, Scissors, PersonCircle, BoxArrowRight } from 'react-bootstrap-icons'; // Iconos
+import { HouseDoorFill, PeopleFill, CalendarCheckFill, BoxFill, Scissors, PersonCircle, BoxArrowRight, CashStack } from 'react-bootstrap-icons';
+
 
 const MainLayout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -17,13 +18,15 @@ const MainLayout = ({ children }) => {
     const handleCloseOffcanvas = () => setShowOffcanvas(false);
     const handleShowOffcanvas = () => setShowOffcanvas(true);
 
-    const navLinks = [
-        { path: "/dashboard", label: "Dashboard", icon: <HouseDoorFill className="me-2" /> },
-        { path: "/clientes", label: "Clientes", icon: <PeopleFill className="me-2" /> },
-        { path: "/servicios", label: "Servicios", icon: <Scissors className="me-2" /> },
-        { path: "/turnos", label: "Turnos", icon: <CalendarCheckFill className="me-2" /> },
-        { path: "/stock", label: "Stock", icon: <BoxFill className="me-2" /> },
-    ];
+const navLinks = [
+    { path: "/dashboard", label: "Dashboard", icon: <HouseDoorFill className="me-2" /> },
+    { path: "/clientes", label: "Clientes", icon: <PeopleFill className="me-2" /> },
+    { path: "/servicios", label: "Servicios", icon: <Scissors className="me-2" /> },
+    { path: "/turnos", label: "Turnos", icon: <CalendarCheckFill className="me-2" /> },
+    { path: "/stock", label: "Stock", icon: <BoxFill className="me-2" /> },
+    { path: "/caja", label: "Caja", icon: <CashStack className="me-2" /> }
+];
+
 
     return (
         <div className="d-flex flex-column vh-100">

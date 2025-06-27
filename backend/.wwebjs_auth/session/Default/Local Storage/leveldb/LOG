@@ -1,6 +1,3 @@
-2025/06/24-11:23:05.155 2f94 Reusing MANIFEST C:\Users\vitom\Downloads\sistema-pelu\backend\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/06/24-11:23:05.265 2f94 Recovering log #3
-2025/06/24-11:23:05.266 2f94 Reusing old log C:\Users\vitom\Downloads\sistema-pelu\backend\.wwebjs_auth\session\Default\Local Storage\leveldb/000003.log 
-2025/06/24-11:24:08.822 2fa8 Level-0 table #5: started
-2025/06/24-11:24:08.836 2fa8 Level-0 table #5: 23448 bytes OK
-2025/06/24-11:24:08.845 2fa8 Delete type=0 #3
+2025/06/27-09:03:52.349 34cc Reusing MANIFEST C:\Users\vitom\OneDrive\Escritorio\sistema-pelu\backend\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/06/27-09:03:52.412 34cc Recovering log #4
+2025/06/27-09:03:52.413 34cc Reusing old log C:\Users\vitom\OneDrive\Escritorio\sistema-pelu\backend\.wwebjs_auth\session\Default\Local Storage\leveldb/000004.log 

@@ -76,3 +76,14 @@ export const createMovimientoStock = (movimientoData) => apiClient.post('/stock/
 // WhatsApp (si se necesitan endpoints específicos desde el frontend)
 export const getWhatsappStatus = () => apiClient.get('/whatsapp/status');
 // export const sendTestWhatsappMessage = (data) => apiClient.post('/whatsapp/send-test', data);
+
+// Caja
+export const abrirCaja = (data) => apiClient.post('/caja/abrir', data);
+export const cerrarCaja = (data) => apiClient.post('/caja/cerrar', data);
+export const registrarMovimientoCaja = (data) => apiClient.post('/caja/movimiento', data);
+export const obtenerCajaActual = () => apiClient.get('/caja/actual');
+export const obtenerResumenCaja = (cajaId) => apiClient.get(`/caja/resumen/${cajaId}`);
+export const generarReporteCaja = (params) => apiClient.get('/caja/reporte',  { params });  
+export const obtenerCategoriasGastos = () => apiClient.get('/caja/categorias-gastos');
+export const obtenerHistorialCajas = (params) => apiClient.get('/caja/historial', { params });
+export const obtenerClientes = () => apiClient.get('/clientes');

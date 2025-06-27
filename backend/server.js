@@ -8,6 +8,7 @@ const servicioRoutes = require('./routes/servicios');
 const turnoRoutes = require('./routes/turnos');
 const stockRoutes = require('./routes/stock');
 const whatsappService = require('./services/whatsappService');
+const cajaRoutes = require('./routes/caja');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/servicios', servicioRoutes);
 app.use('/api/turnos', turnoRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/whatsapp', whatsappRoutes); // Usar rutas de WhatsApp
+app.use('/api/caja', cajaRoutes);
 
 // Middleware para manejo de errores (simple por ahora)
 app.use((err, req, res, next) => {
