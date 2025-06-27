@@ -29,7 +29,10 @@ const ClientesPage = () => {
         setError('');
         try {
             const response = await fetchClientes();
-            setClientes(response.data);
+            // ✅ CORREGIDO: acceder correctamente a los datos
+            setClientes(response.data.data.clientes || []);
+            // (opcional) console.log para depuración
+            console.log("Clientes recibidos:", response.data.data.clientes);
         } catch (err) {
             console.error("Error al cargar clientes:", err);
             setError(err.response?.data?.message || err.message || 'Error al cargar clientes.');
@@ -49,20 +52,14 @@ const ClientesPage = () => {
     };
 
     const handleShowFormToEdit = (cliente) => {
-        // Formatear la fecha correctamente evitando problemas de zona horaria
         const formatDateForEdit = (dateString) => {
             if (!dateString) return '';
-            
-            // Si ya está en formato YYYY-MM-DD, devolverla tal como está
             if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
                 return dateString;
             }
-            
-            // Si tiene formato ISO o con hora, extraer solo la fecha
             if (typeof dateString === 'string' && dateString.includes('T')) {
                 return dateString.split('T')[0];
             }
-            
             return '';
         };
 
@@ -70,7 +67,7 @@ const ClientesPage = () => {
             ...cliente,
             fecha_cumpleanos: formatDateForEdit(cliente.fecha_cumpleanos)
         };
-        
+
         setClienteToEdit(clienteParaEditar);
         setError('');
         setShowFormModal(true);

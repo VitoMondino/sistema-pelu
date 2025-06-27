@@ -3,8 +3,24 @@ const db = require('../db');
 // Obtener todos los clientes
 async function getAllClientes(req, res, next) {
   try {
-    const rows = await db.query('SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, notas FROM clientes');
-    res.json(rows);
+    const rows = await db.query(`
+      SELECT 
+        id, 
+        nombre, 
+        apellido, 
+        telefono, 
+        DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, 
+        notas 
+      FROM clientes
+    `);
+
+    // ⬇⬇⬇ Aquí está el cambio importante
+    res.json({
+      success: true,
+      data: {
+        clientes: rows
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -14,10 +30,16 @@ async function getAllClientes(req, res, next) {
 async function getClienteById(req, res, next) {
   const { id } = req.params;
   try {
-    const rows = await db.query('SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, notas FROM clientes WHERE id = ?', [id]);
+    const rows = await db.query(`
+      SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, notas 
+      FROM clientes 
+      WHERE id = ?
+    `, [id]);
+
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
+
     res.json(rows[0]);
   } catch (error) {
     next(error);
@@ -27,18 +49,17 @@ async function getClienteById(req, res, next) {
 // Crear un nuevo cliente
 async function createCliente(req, res, next) {
   const { nombre, apellido, telefono, fecha_cumpleanos, notas } = req.body;
+
   if (!nombre || !apellido || !telefono) {
     return res.status(400).json({ message: 'Nombre, apellido y teléfono son requeridos.' });
   }
 
   try {
-    // Validar y formatear fecha si existe
     let fechaFormateada = null;
-    if (fecha_cumpleanos && fecha_cumpleanos.trim() !== '') {
-      // Validar formato de fecha YYYY-MM-DD
+    if (fecha_cumpleanos?.trim()) {
       const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!fechaRegex.test(fecha_cumpleanos)) {
-        return res.status(400).json({ message: 'La fecha de cumpleaños debe tener el formato YYYY-MM-DD' });
+        return res.status(400).json({ message: 'La fecha debe tener formato YYYY-MM-DD' });
       }
       fechaFormateada = fecha_cumpleanos;
     }
@@ -47,8 +68,7 @@ async function createCliente(req, res, next) {
       'INSERT INTO clientes (nombre, apellido, telefono, fecha_cumpleanos, notas) VALUES (?, ?, ?, ?, ?)',
       [nombre, apellido, telefono, fechaFormateada, notas || null]
     );
-    
-    // Devolver el cliente creado con la fecha formateada
+
     const clienteCreado = {
       id: result.insertId,
       nombre,
@@ -57,7 +77,7 @@ async function createCliente(req, res, next) {
       fecha_cumpleanos: fechaFormateada,
       notas: notas || null
     };
-    
+
     res.status(201).json({ message: 'Cliente creado con éxito!', ...clienteCreado });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
@@ -77,13 +97,11 @@ async function updateCliente(req, res, next) {
   }
 
   try {
-    // Validar y formatear fecha si existe
     let fechaFormateada = null;
-    if (fecha_cumpleanos && fecha_cumpleanos.trim() !== '') {
-      // Validar formato de fecha YYYY-MM-DD
+    if (fecha_cumpleanos?.trim()) {
       const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!fechaRegex.test(fecha_cumpleanos)) {
-        return res.status(400).json({ message: 'La fecha de cumpleaños debe tener el formato YYYY-MM-DD' });
+        return res.status(400).json({ message: 'La fecha debe tener formato YYYY-MM-DD' });
       }
       fechaFormateada = fecha_cumpleanos;
     }
@@ -92,12 +110,11 @@ async function updateCliente(req, res, next) {
       'UPDATE clientes SET nombre = ?, apellido = ?, telefono = ?, fecha_cumpleanos = ?, notas = ? WHERE id = ?',
       [nombre, apellido, telefono, fechaFormateada, notas || null, id]
     );
-    
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Cliente no encontrado para actualizar' });
     }
-    
-    // Devolver el cliente actualizado con la fecha formateada
+
     const clienteActualizado = {
       id: parseInt(id),
       nombre,
@@ -106,7 +123,7 @@ async function updateCliente(req, res, next) {
       fecha_cumpleanos: fechaFormateada,
       notas: notas || null
     };
-    
+
     res.json({ message: 'Cliente actualizado con éxito!', ...clienteActualizado });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
@@ -134,7 +151,6 @@ async function deleteCliente(req, res, next) {
 async function getHistorialServiciosByClienteId(req, res, next) {
   const { id } = req.params;
   try {
-    // Primero verificar si el cliente existe
     const cliente = await db.query('SELECT id FROM clientes WHERE id = ?', [id]);
     if (cliente.length === 0) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
@@ -166,44 +182,34 @@ async function getProximosCumpleanos(req, res, next) {
   const diasAdelanto = parseInt(req.query.dias) || 7;
   
   try {
-    // Obtener todos los clientes con fecha de cumpleaños
     const query = `
       SELECT 
-        id, 
-        nombre, 
-        apellido, 
-        telefono, 
+        id, nombre, apellido, telefono, 
         DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos
       FROM clientes 
       WHERE fecha_cumpleanos IS NOT NULL
       ORDER BY nombre, apellido
     `;
-    
+
     const todosLosClientes = await db.query(query);
-    
-    // Filtrar en JavaScript para mayor precisión
+
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0); // Establecer a medianoche para comparación limpia
-    
+    hoy.setHours(0, 0, 0, 0);
+
     const fechaLimite = new Date(hoy);
     fechaLimite.setDate(hoy.getDate() + diasAdelanto);
-    
+
     const clientesFiltrados = todosLosClientes.filter(cliente => {
       if (!cliente.fecha_cumpleanos) return false;
-      
-      // Parsear la fecha del cumpleaños
+
       const [year, month, day] = cliente.fecha_cumpleanos.split('-').map(Number);
-      
-      // Crear fecha de cumpleaños para este año
       let proximoCumple = new Date(hoy.getFullYear(), month - 1, day);
       proximoCumple.setHours(0, 0, 0, 0);
-      
-      // Si el cumpleaños de este año ya pasó, usar el del próximo año
+
       if (proximoCumple < hoy) {
         proximoCumple.setFullYear(hoy.getFullYear() + 1);
       }
-      
-      // Verificar si está dentro del rango
+
       return proximoCumple >= hoy && proximoCumple <= fechaLimite;
     });
 

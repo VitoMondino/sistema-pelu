@@ -299,79 +299,83 @@ const cajaController = {
         }
     },
 
-    // 8. HISTORIAL DE CAJAS CON MOVIMIENTOS
+    // 8. HISTORIAL DE CAJAS CON MOVIMIENTOS (modificado para incluir nombre y apellido del cliente)
     obtenerHistorial: async (req, res) => {
-    try {
-      let page = parseInt(req.query.page, 10);
-      let limit = parseInt(req.query.limit, 10);
+        try {
+            let page = parseInt(req.query.page, 10);
+            let limit = parseInt(req.query.limit, 10);
 
-      if (isNaN(page) || page < 1) page = 1;
-      if (isNaN(limit) || limit < 1) limit = 10;
+            if (isNaN(page) || page < 1) page = 1;
+            if (isNaN(limit) || limit < 1) limit = 10;
 
-      const offset = (page - 1) * limit;
+            const offset = (page - 1) * limit;
 
-      // Consulta principal, inyectando limit y offset validos directamente
-      const cajas = await db.query(`
-        SELECT c.*, 
-               u_apertura.nombre_usuario as usuario_apertura,
-               u_cierre.nombre_usuario as usuario_cierre,
-               COUNT(mc.id) as total_movimientos,
-               COALESCE(SUM(CASE 
-                   WHEN mc.tipo_movimiento IN ('apertura', 'cobro_cliente', 'ajuste_positivo') 
-                   THEN mc.monto 
-                   ELSE -mc.monto 
-               END), c.monto_apertura) as saldo_final
-        FROM cajas c
-        LEFT JOIN usuarios u_apertura ON c.usuario_apertura_id = u_apertura.id
-        LEFT JOIN usuarios u_cierre ON c.usuario_cierre_id = u_cierre.id
-        LEFT JOIN movimientos_caja mc ON c.id = mc.caja_id
-        GROUP BY c.id
-        ORDER BY c.fecha_apertura DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `);
+            // Consulta principal, inyectando limit y offset validos directamente
+            const cajas = await db.query(`
+                SELECT c.*, 
+                       u_apertura.nombre_usuario as usuario_apertura,
+                       u_cierre.nombre_usuario as usuario_cierre,
+                       COUNT(mc.id) as total_movimientos,
+                       COALESCE(SUM(CASE 
+                           WHEN mc.tipo_movimiento IN ('apertura', 'cobro_cliente', 'ajuste_positivo') 
+                           THEN mc.monto 
+                           ELSE -mc.monto 
+                       END), c.monto_apertura) as saldo_final
+                FROM cajas c
+                LEFT JOIN usuarios u_apertura ON c.usuario_apertura_id = u_apertura.id
+                LEFT JOIN usuarios u_cierre ON c.usuario_cierre_id = u_cierre.id
+                LEFT JOIN movimientos_caja mc ON c.id = mc.caja_id
+                GROUP BY c.id
+                ORDER BY c.fecha_apertura DESC
+                LIMIT ${limit} OFFSET ${offset}
+            `);
 
-      const cajaIds = cajas.map(c => c.id);
+            const cajaIds = cajas.map(c => c.id);
 
-      let movimientos = [];
-      if (cajaIds.length > 0) {
-        movimientos = await db.query(`
-          SELECT * FROM vista_movimientos_detalle 
-          WHERE caja_id IN (${cajaIds.map(() => '?').join(',')})
-          ORDER BY caja_id DESC, fecha_movimiento DESC
-        `, cajaIds);
-      }
+            let movimientos = [];
+            if (cajaIds.length > 0) {
+                movimientos = await db.query(`
+                    SELECT vmd.*, 
+                           ctes.nombre as cliente_nombre,
+                           ctes.apellido as cliente_apellido
+                    FROM vista_movimientos_detalle vmd
+                    LEFT JOIN clientes ctes ON vmd.cliente_id = ctes.id
+                    WHERE vmd.caja_id IN (${cajaIds.map(() => '?').join(',')})
+                    ORDER BY vmd.caja_id DESC, vmd.fecha_movimiento DESC
+                `, cajaIds);
+            }
 
-      const movimientosPorCaja = {};
-      for (const mov of movimientos) {
-        if (!movimientosPorCaja[mov.caja_id]) movimientosPorCaja[mov.caja_id] = [];
-        movimientosPorCaja[mov.caja_id].push(mov);
-      }
+            const movimientosPorCaja = {};
+            for (const mov of movimientos) {
+                if (!movimientosPorCaja[mov.caja_id]) movimientosPorCaja[mov.caja_id] = [];
+                movimientosPorCaja[mov.caja_id].push(mov);
+            }
 
-      const cajasConMovimientos = cajas.map(caja => ({
-        ...caja,
-        movimientos: movimientosPorCaja[caja.id] || []
-      }));
+            const cajasConMovimientos = cajas.map(caja => ({
+                ...caja,
+                movimientos: movimientosPorCaja[caja.id] || []
+            }));
 
-      const totalCount = await db.query('SELECT COUNT(*) as total FROM cajas');
+            const totalCount = await db.query('SELECT COUNT(*) as total FROM cajas');
 
-      res.json({
-        success: true,
-        data: {
-          cajas: cajasConMovimientos,
-          pagination: {
-            page,
-            limit,
-            total: totalCount[0].total,
-            pages: Math.ceil(totalCount[0].total / limit)
-          }
+            res.json({
+                success: true,
+                data: {
+                    cajas: cajasConMovimientos,
+                    pagination: {
+                        page,
+                        limit,
+                        total: totalCount[0].total,
+                        pages: Math.ceil(totalCount[0].total / limit)
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Error al obtener historial:', error);
+            res.status(500).json({ success: false, message: 'Error interno del servidor' });
         }
-      });
-
-    } catch (error) {
-      console.error('Error al obtener historial:', error);
-      res.status(500).json({ success: false, message: 'Error interno del servidor' });
-    }
-  },
+    },
 
 };
 

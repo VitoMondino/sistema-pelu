@@ -5,21 +5,9 @@ import {
   registrarMovimientoCaja,
   obtenerCajaActual,
   obtenerHistorialCajas,
-  // eliminé obtenerClientes importado porque la definimos acá
+  obtenerClientes,
 } from '../../api';
-import { Button, Form, Table, Alert, Row, Col, Badge } from 'react-bootstrap';
-
-// Función para obtener clientes desde /clientes
-const obtenerClientes = async () => {
-  try {
-    const response = await fetch('/clientes');
-    if (!response.ok) throw new Error('Error al obtener clientes');
-    const data = await response.json();
-    return { data };
-  } catch (error) {
-    throw error;
-  }
-};
+import { Button, Form, Table, Alert, Row, Col, Badge, Spinner } from 'react-bootstrap';
 
 const CajaDashboard = () => {
   const [caja, setCaja] = useState(null);
@@ -37,8 +25,16 @@ const CajaDashboard = () => {
   const [historialCajas, setHistorialCajas] = useState([]);
   const [pageHistorial, setPageHistorial] = useState(1);
   const [totalPagesHistorial, setTotalPagesHistorial] = useState(1);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   const [movimientosPorCaja, setMovimientosPorCaja] = useState({});
+
+  // Nuevos estados para filtro de fechas
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+
+  // Estado para mostrar u ocultar historial
+  const [mostrarHistorial, setMostrarHistorial] = useState(true);
 
   const cargarCaja = async () => {
     try {
@@ -47,14 +43,19 @@ const CajaDashboard = () => {
         setCaja(res.data.data?.caja);
         setMovimientos(res.data.data?.movimientos || []);
       }
-    } catch (err) {
+    } catch {
       setError('Error al obtener la caja.');
     }
   };
 
   const cargarHistorialCajas = async (pagina = 1) => {
+    setLoadingHistorial(true);
     try {
-      const res = await obtenerHistorialCajas({ page: pagina, limit: 10 });
+      const params = { page: pagina, limit: 5 };
+      if (fechaDesde) params.fecha_desde = fechaDesde;
+      if (fechaHasta) params.fecha_hasta = fechaHasta;
+
+      const res = await obtenerHistorialCajas(params);
       if (res.data.success) {
         setHistorialCajas(res.data.data.cajas);
         setPageHistorial(res.data.data.pagination.page);
@@ -63,6 +64,7 @@ const CajaDashboard = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cargar historial de cajas.');
     }
+    setLoadingHistorial(false);
   };
 
   const cargarClientes = async () => {
@@ -73,13 +75,17 @@ const CajaDashboard = () => {
       } else {
         setClientes([]);
       }
-    } catch (err) {
+    } catch {
       setError('Error al cargar clientes');
       setClientes([]);
     }
   };
 
   const handleAbrirCaja = async () => {
+    if (!montoApertura || isNaN(montoApertura) || parseFloat(montoApertura) <= 0) {
+      setError('Ingrese un monto de apertura válido');
+      return;
+    }
     try {
       await abrirCaja({
         monto_apertura: parseFloat(montoApertura),
@@ -128,6 +134,7 @@ const CajaDashboard = () => {
       setMontoMovimiento('');
       setClienteSeleccionado('');
       await cargarCaja();
+      await cargarHistorialCajas(pageHistorial);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al registrar movimiento.');
     }
@@ -136,6 +143,10 @@ const CajaDashboard = () => {
   const handleCerrarCaja = async () => {
     const monto = prompt('Monto de cierre:');
     if (!monto) return;
+    if (isNaN(monto) || parseFloat(monto) < 0) {
+      setError('Ingrese un monto válido para cierre');
+      return;
+    }
     try {
       await cerrarCaja({
         caja_id: caja.id,
@@ -145,7 +156,7 @@ const CajaDashboard = () => {
       });
       setSuccessMsg('Caja cerrada correctamente');
       await cargarCaja();
-      await cargarHistorialCajas();
+      await cargarHistorialCajas(1);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cerrar caja.');
     }
@@ -155,6 +166,7 @@ const CajaDashboard = () => {
     new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
 
   const renderPaginacionHistorial = () => {
+    if (totalPagesHistorial <= 1) return null;
     const items = [];
     for (let i = 1; i <= totalPagesHistorial; i++) {
       items.push(
@@ -172,7 +184,7 @@ const CajaDashboard = () => {
     return items;
   };
 
-  const toggleMovimientosCaja = async (cajaId) => {
+  const toggleMovimientosCaja = (cajaId) => {
     if (movimientosPorCaja[cajaId]) {
       setMovimientosPorCaja((prev) => {
         const copy = { ...prev };
@@ -180,14 +192,9 @@ const CajaDashboard = () => {
         return copy;
       });
     } else {
-      try {
-        const res = await obtenerHistorialCajas({ page: 1, limit: 1000 });
-        if (res.data.success) {
-          const caja = res.data.data.cajas.find((c) => c.id === cajaId);
-          setMovimientosPorCaja((prev) => ({ ...prev, [cajaId]: caja?.movimientos || [] }));
-        }
-      } catch (err) {
-        setError('Error al cargar movimientos de la caja.');
+      const caja = historialCajas.find((c) => c.id === cajaId);
+      if (caja) {
+        setMovimientosPorCaja((prev) => ({ ...prev, [cajaId]: caja.movimientos || [] }));
       }
     }
   };
@@ -195,9 +202,9 @@ const CajaDashboard = () => {
   useEffect(() => {
     cargarCaja();
     cargarHistorialCajas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // CORRECCIÓN: El array de dependencias debe ser constante para evitar el warning
   useEffect(() => {
     if (tipoMovimiento === 'cobro_cliente') {
       cargarClientes();
@@ -269,7 +276,7 @@ const CajaDashboard = () => {
                       <option value="">-- Seleccione Cliente --</option>
                       {clientes.map((cliente) => (
                         <option key={cliente.id} value={cliente.id}>
-                          {cliente.nombre}
+                          {cliente.nombre + ' ' + cliente.apellido}
                         </option>
                       ))}
                     </Form.Select>
@@ -348,70 +355,148 @@ const CajaDashboard = () => {
         </>
       )}
 
-      <h4 className="mt-4">Historial de Cajas</h4>
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Fecha Apertura</th>
-            <th>Fecha Cierre</th>
-            <th>Monto Apertura</th>
-            <th>Monto Cierre</th>
-            <th>Usuario Apertura</th>
-            <th>Usuario Cierre</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {historialCajas.map((c) => (
-            <tr key={c.id}>
-              <td>{c.id}</td>
-              <td>{new Date(c.fecha_apertura).toLocaleString()}</td>
-              <td>{c.fecha_cierre ? new Date(c.fecha_cierre).toLocaleString() : '-'}</td>
-              <td>{formatCurrency(c.monto_apertura)}</td>
-              <td>{c.monto_cierre ? formatCurrency(c.monto_cierre) : '-'}</td>
-              <td>{c.usuario_apertura}</td>
-              <td>{c.usuario_cierre || '-'}</td>
-              <td>
-                <Button size="sm" onClick={() => toggleMovimientosCaja(c.id)}>
-                  {movimientosPorCaja[c.id] ? 'Ocultar Movimientos' : 'Ver Movimientos'}
-                </Button>
-              </td>
-            </tr>
-          ))}
-          {historialCajas.map(
-            (c) =>
-              movimientosPorCaja[c.id] && (
-                <tr key={'movimientos-' + c.id}>
-                  <td colSpan={8}>
-                    <Table bordered size="sm">
-                      <thead>
-                        <tr>
-                          <th>Fecha</th>
-                          <th>Tipo</th>
-                          <th>Monto</th>
-                          <th>Descripción</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {movimientosPorCaja[c.id].map((mov) => (
-                          <tr key={mov.id}>
-                            <td>{new Date(mov.fecha_movimiento).toLocaleString()}</td>
-                            <td>{mov.tipo_movimiento}</td>
-                            <td>{formatCurrency(mov.monto_con_signo)}</td>
-                            <td>{mov.descripcion}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </td>
-                </tr>
-              )
-          )}
-        </tbody>
-      </Table>
+      {/* Formulario filtro fechas */}
+      <Form className="mb-3 d-flex gap-2 align-items-end flex-wrap">
+        <Form.Group controlId="fechaDesde" className="me-2">
+          <Form.Label>Fecha Desde</Form.Label>
+          <Form.Control
+            type="date"
+            value={fechaDesde}
+            onChange={(e) => setFechaDesde(e.target.value)}
+          />
+        </Form.Group>
 
-      <div className="d-flex justify-content-center mt-3">{renderPaginacionHistorial()}</div>
+        <Form.Group controlId="fechaHasta" className="me-2">
+          <Form.Label>Fecha Hasta</Form.Label>
+          <Form.Control
+            type="date"
+            value={fechaHasta}
+            onChange={(e) => setFechaHasta(e.target.value)}
+          />
+        </Form.Group>
+
+        <Button onClick={() => cargarHistorialCajas(1)} className="mb-2">
+          Filtrar
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setFechaDesde('');
+            setFechaHasta('');
+            cargarHistorialCajas(1);
+          }}
+          className="mb-2"
+        >
+          Limpiar Filtro
+        </Button>
+      </Form>
+
+      {/* Botón para mostrar/ocultar historial */}
+      <Button
+        variant="secondary"
+        size="sm"
+        className="mb-2"
+        onClick={() => setMostrarHistorial(!mostrarHistorial)}
+      >
+        {mostrarHistorial ? 'Ocultar Historial' : 'Mostrar Historial'}
+      </Button>
+
+      {/* Mostrar historial solo si mostrarHistorial es true */}
+      {mostrarHistorial && (
+        <>
+          <h4 className="mt-4">Historial de Cajas</h4>
+          {loadingHistorial ? (
+            <div className="text-center">
+              <Spinner animation="border" variant="primary" />
+            </div>
+          ) : (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Fecha Apertura</th>
+                  <th>Fecha Cierre</th>
+                  <th>Monto Apertura</th>
+                  <th>Monto Cierre</th>
+                  <th>Usuario Apertura</th>
+                  <th>Usuario Cierre</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historialCajas.length === 0 && (
+                  <tr>
+                    <td colSpan="8" className="text-center">
+                      No hay cajas en el historial.
+                    </td>
+                  </tr>
+                )}
+                {historialCajas.map((c) => (
+                  <React.Fragment key={c.id}>
+                    <tr>
+                      <td>{c.id}</td>
+                      <td>{new Date(c.fecha_apertura).toLocaleString()}</td>
+                      <td>{c.fecha_cierre ? new Date(c.fecha_cierre).toLocaleString() : '-'}</td>
+                      <td>{formatCurrency(c.monto_apertura)}</td>
+                      <td>{c.monto_cierre ? formatCurrency(c.monto_cierre) : '-'}</td>
+                      <td>{c.usuario_apertura}</td>
+                      <td>{c.usuario_cierre || '-'}</td>
+                      <td>
+                        <Button size="sm" onClick={() => toggleMovimientosCaja(c.id)}>
+                          {movimientosPorCaja[c.id] ? 'Ocultar Movimientos' : 'Ver Movimientos'}
+                        </Button>
+                      </td>
+                    </tr>
+                    {movimientosPorCaja[c.id] && (
+                      <tr>
+                        <td colSpan={8}>
+                          <Table bordered size="sm" responsive>
+                            <thead>
+                              <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Monto</th>
+                                <th>Descripción</th>
+                                <th>Cliente</th>
+                                <th>Método Pago</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {movimientosPorCaja[c.id].map((mov) => (
+                                <tr key={mov.id}>
+                                  <td>{new Date(mov.fecha_movimiento).toLocaleString()}</td>
+                                  <td>{mov.tipo_movimiento}</td>
+                                  <td
+                                    style={{
+                                      color:
+                                        parseFloat(mov.monto_con_signo) < 0 ? 'red' : 'green',
+                                    }}
+                                  >
+                                    {formatCurrency(mov.monto_con_signo)}
+                                  </td>
+                                  <td>{mov.descripcion}</td>
+                                  <td>
+                                    {mov.cliente_nombre && mov.cliente_apellido
+                                      ? `${mov.cliente_nombre} ${mov.cliente_apellido}`
+                                      : '-'}
+                                  </td>
+                                  <td>{mov.metodo_pago || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </Table>
+          )}
+          <div className="d-flex justify-content-center mt-3">{renderPaginacionHistorial()}</div>
+        </>
+      )}
     </div>
   );
 };
