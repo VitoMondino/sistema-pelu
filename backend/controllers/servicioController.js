@@ -14,7 +14,7 @@ async function getAllServicios(req, res, next) {
 async function getServicioById(req, res, next) {
   const { id } = req.params;
   try {
-    const rows = await db.query('SELECT id, nombre_servicio, precio FROM servicios WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT id, nombre_servicio, precio FROM servicios WHERE id = ?', [id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Servicio no encontrado' });
     }

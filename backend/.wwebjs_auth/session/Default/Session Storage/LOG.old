@@ -1,2 +1,3 @@
-2025/06/27-15:42:36.815 2108 Creating DB C:\Users\vitom\Downloads\sistema-pelu\backend\.wwebjs_auth\session\Default\Session Storage since it was missing.
-2025/06/27-15:42:36.857 2108 Reusing MANIFEST C:\Users\vitom\Downloads\sistema-pelu\backend\.wwebjs_auth\session\Default\Session Storage/MANIFEST-000001
+2025/06/30-16:51:55.869 3250 Reusing MANIFEST C:\Users\vitom\OneDrive\Escritorio\sistema-pelu\backend\.wwebjs_auth\session\Default\Session Storage/MANIFEST-000001
+2025/06/30-16:51:55.869 3250 Recovering log #3
+2025/06/30-16:51:55.870 3250 Reusing old log C:\Users\vitom\OneDrive\Escritorio\sistema-pelu\backend\.wwebjs_auth\session\Default\Session Storage/000003.log 

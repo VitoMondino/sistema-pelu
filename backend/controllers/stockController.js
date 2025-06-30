@@ -135,8 +135,8 @@ async function updateStock(req, res, next) {
     if (ajuste_cantidad !== undefined && parseInt(ajuste_cantidad) !== 0) {
       const tipo_mov = parseInt(ajuste_cantidad) > 0 ? 'ajuste_positivo' : 'ajuste_negativo';
       await db.query(
-        'INSERT INTO movimientos_stock (producto_id, tipo_movimiento, cantidad_movida, motivo) VALUES (?, ?, ?, ?)',
-        [id, tipo_mov, parseInt(ajuste_cantidad), 'Ajuste rápido desde lista']
+        'INSERT INTO movimientos_stock (producto_id, tipo_movimiento, cantidad_movida, cantidad_anterior, cantidad_nueva, motivo) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, tipo_mov, parseInt(ajuste_cantidad), currentStock.cantidad, final_cantidad, 'Ajuste rápido desde lista']
       );
     }
 
@@ -225,9 +225,10 @@ async function createMovimientoStock(req, res, next) {
     }
 
     await db.query('UPDATE stock SET cantidad = ? WHERE id = ?', [nuevaCantidad, producto_id]);
+
     const movimientoResult = await db.query(
-      'INSERT INTO movimientos_stock (producto_id, tipo_movimiento, cantidad_movida, motivo, precio_unitario_movimiento, turno_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [producto_id, tipo_movimiento, cantidadRealMovidaEnTabla, motivo || null, precio_unitario_movimiento || null, turno_id || null]
+      'INSERT INTO movimientos_stock (producto_id, tipo_movimiento, cantidad_movida, cantidad_anterior, cantidad_nueva, motivo, precio_unitario_movimiento, turno_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [producto_id, tipo_movimiento, cantidadRealMovidaEnTabla, cantidadActual, nuevaCantidad, motivo || null, precio_unitario_movimiento || null, turno_id || null]
     );
 
     res.status(201).json({ message: 'Movimiento de stock registrado!', movimientoId: movimientoResult.insertId, producto_id, nuevaCantidad });
