@@ -19,6 +19,7 @@ const CajaDashboard = () => {
   const [tipoMovimiento, setTipoMovimiento] = useState('cobro_cliente');
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [metodoPago, setMetodoPago] = useState('efectivo'); // <-- nuevo estado
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
@@ -121,6 +122,7 @@ const CajaDashboard = () => {
         monto: parseFloat(montoMovimiento),
         descripcion,
         usuario_id: usuarioId,
+        metodo_pago: metodoPago,  // <-- agregamos el método de pago
       };
 
       if (tipoMovimiento === 'cobro_cliente') {
@@ -133,6 +135,7 @@ const CajaDashboard = () => {
       setDescripcion('');
       setMontoMovimiento('');
       setClienteSeleccionado('');
+      setMetodoPago('efectivo'); // <-- reset método de pago
       await cargarCaja();
       await cargarHistorialCajas(pageHistorial);
     } catch (err) {
@@ -285,13 +288,27 @@ const CajaDashboard = () => {
               )}
 
               <Col md={4}>
-                <Form.Label>Monto</Form.Label>
-                <Form.Control
-                  type="number"
-                  placeholder="Monto"
-                  value={montoMovimiento}
-                  onChange={(e) => setMontoMovimiento(e.target.value)}
-                />
+                <Form.Group className="mb-2">
+                  <Form.Label>Monto</Form.Label>
+                  <Form.Control
+                    type="number"
+                    placeholder="Monto"
+                    value={montoMovimiento}
+                    onChange={(e) => setMontoMovimiento(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={4}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Método de Pago</Form.Label>
+                  <Form.Select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)}>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta_debito">Tarjeta Débito</option>
+                    <option value="tarjeta_credito">Tarjeta Crédito</option>
+                  </Form.Select>
+                </Form.Group>
               </Col>
 
               <Col md={12}>
