@@ -65,6 +65,12 @@ CREATE TABLE IF NOT EXISTS movimientos_stock (
     FOREIGN KEY (turno_id) REFERENCES turnos(id) ON DELETE SET NULL -- Si se borra un turno, que no borre el movimiento de stock
 );
 
+use peluqueria_db;
+ALTER TABLE movimientos_stock
+ADD COLUMN cantidad_anterior INT NOT NULL DEFAULT 0,
+ADD COLUMN cantidad_nueva INT NOT NULL DEFAULT 0;
+
+
 -- Extensión del schema existente para Sistema de Caja
 USE peluqueria_db;
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   abrirCaja,
   cerrarCaja,
@@ -6,20 +6,29 @@ import {
   obtenerCajaActual,
   obtenerHistorialCajas,
   obtenerClientes,
-} from '../../api';
-import { Button, Form, Table, Alert, Row, Col, Badge, Spinner } from 'react-bootstrap';
+} from "../../api";
+import {
+  Button,
+  Form,
+  Table,
+  Alert,
+  Row,
+  Col,
+  Badge,
+  Spinner,
+} from "react-bootstrap";
 
 const CajaDashboard = () => {
   const [caja, setCaja] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
-  const [montoApertura, setMontoApertura] = useState('');
-  const usuarioId = JSON.parse(localStorage.getItem('user'))?.id || 1;
-  const [descripcion, setDescripcion] = useState('');
-  const [montoMovimiento, setMontoMovimiento] = useState('');
-  const [tipoMovimiento, setTipoMovimiento] = useState('cobro_cliente');
+  const [montoApertura, setMontoApertura] = useState("");
+  const usuarioId = JSON.parse(localStorage.getItem("user"))?.id || 1;
+  const [descripcion, setDescripcion] = useState("");
+  const [montoMovimiento, setMontoMovimiento] = useState("");
+  const [tipoMovimiento, setTipoMovimiento] = useState("cobro_cliente");
   const [clientes, setClientes] = useState([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
-  const [metodoPago, setMetodoPago] = useState('efectivo'); // <-- nuevo estado
+  const [clienteSeleccionado, setClienteSeleccionado] = useState("");
+  const [metodoPago, setMetodoPago] = useState("efectivo"); // <-- nuevo estado
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
@@ -31,8 +40,8 @@ const CajaDashboard = () => {
   const [movimientosPorCaja, setMovimientosPorCaja] = useState({});
 
   // Nuevos estados para filtro de fechas
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
 
   // Estado para mostrar u ocultar historial
   const [mostrarHistorial, setMostrarHistorial] = useState(true);
@@ -45,7 +54,7 @@ const CajaDashboard = () => {
         setMovimientos(res.data.data?.movimientos || []);
       }
     } catch {
-      setError('Error al obtener la caja.');
+      setError("Error al obtener la caja.");
     }
   };
 
@@ -63,7 +72,9 @@ const CajaDashboard = () => {
         setTotalPagesHistorial(res.data.data.pagination.pages);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cargar historial de cajas.');
+      setError(
+        err.response?.data?.message || "Error al cargar historial de cajas."
+      );
     }
     setLoadingHistorial(false);
   };
@@ -77,42 +88,50 @@ const CajaDashboard = () => {
         setClientes([]);
       }
     } catch {
-      setError('Error al cargar clientes');
+      setError("Error al cargar clientes");
       setClientes([]);
     }
   };
 
   const handleAbrirCaja = async () => {
-    if (!montoApertura || isNaN(montoApertura) || parseFloat(montoApertura) <= 0) {
-      setError('Ingrese un monto de apertura válido');
+    if (
+      !montoApertura ||
+      isNaN(montoApertura) ||
+      parseFloat(montoApertura) <= 0
+    ) {
+      setError("Ingrese un monto de apertura válido");
       return;
     }
     try {
       await abrirCaja({
         monto_apertura: parseFloat(montoApertura),
         usuario_id: usuarioId,
-        observaciones: 'Apertura diaria',
+        observaciones: "Apertura diaria",
       });
-      setSuccessMsg('Caja abierta correctamente');
-      setMontoApertura('');
+      setSuccessMsg("Caja abierta correctamente");
+      setMontoApertura("");
       await cargarCaja();
       await cargarHistorialCajas();
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al abrir la caja.');
+      setError(err.response?.data?.message || "Error al abrir la caja.");
     }
   };
 
   const handleRegistrarMovimiento = async () => {
-    if (!montoMovimiento || isNaN(montoMovimiento) || parseFloat(montoMovimiento) <= 0) {
-      setError('Por favor, ingrese un monto válido para el movimiento.');
+    if (
+      !montoMovimiento ||
+      isNaN(montoMovimiento) ||
+      parseFloat(montoMovimiento) <= 0
+    ) {
+      setError("Por favor, ingrese un monto válido para el movimiento.");
       return;
     }
     if (!descripcion.trim()) {
-      setError('Por favor, ingrese una descripción para el movimiento.');
+      setError("Por favor, ingrese una descripción para el movimiento.");
       return;
     }
-    if (tipoMovimiento === 'cobro_cliente' && !clienteSeleccionado) {
-      setError('Por favor, seleccione un cliente para el cobro.');
+    if (tipoMovimiento === "cobro_cliente" && !clienteSeleccionado) {
+      setError("Por favor, seleccione un cliente para el cobro.");
       return;
     }
 
@@ -122,32 +141,32 @@ const CajaDashboard = () => {
         monto: parseFloat(montoMovimiento),
         descripcion,
         usuario_id: usuarioId,
-        metodo_pago: metodoPago,  // <-- agregamos el método de pago
+        metodo_pago: metodoPago, // <-- agregamos el método de pago
       };
 
-      if (tipoMovimiento === 'cobro_cliente') {
+      if (tipoMovimiento === "cobro_cliente") {
         payload.cliente_id = clienteSeleccionado;
       }
 
       await registrarMovimientoCaja(payload);
 
-      setSuccessMsg('Movimiento registrado');
-      setDescripcion('');
-      setMontoMovimiento('');
-      setClienteSeleccionado('');
-      setMetodoPago('efectivo'); // <-- reset método de pago
+      setSuccessMsg("Movimiento registrado");
+      setDescripcion("");
+      setMontoMovimiento("");
+      setClienteSeleccionado("");
+      setMetodoPago("efectivo"); // <-- reset método de pago
       await cargarCaja();
       await cargarHistorialCajas(pageHistorial);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al registrar movimiento.');
+      setError(err.response?.data?.message || "Error al registrar movimiento.");
     }
   };
 
   const handleCerrarCaja = async () => {
-    const monto = prompt('Monto de cierre:');
+    const monto = prompt("Monto de cierre:");
     if (!monto) return;
     if (isNaN(monto) || parseFloat(monto) < 0) {
-      setError('Ingrese un monto válido para cierre');
+      setError("Ingrese un monto válido para cierre");
       return;
     }
     try {
@@ -155,18 +174,21 @@ const CajaDashboard = () => {
         caja_id: caja.id,
         usuario_id: usuarioId,
         monto_cierre: parseFloat(monto),
-        observaciones: 'Cierre manual',
+        observaciones: "Cierre manual",
       });
-      setSuccessMsg('Caja cerrada correctamente');
+      setSuccessMsg("Caja cerrada correctamente");
       await cargarCaja();
       await cargarHistorialCajas(1);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cerrar caja.');
+      setError(err.response?.data?.message || "Error al cerrar caja.");
     }
   };
 
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
+    new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+    }).format(amount);
 
   const renderPaginacionHistorial = () => {
     if (totalPagesHistorial <= 1) return null;
@@ -176,7 +198,7 @@ const CajaDashboard = () => {
         <Button
           key={i}
           size="sm"
-          variant={i === pageHistorial ? 'primary' : 'light'}
+          variant={i === pageHistorial ? "primary" : "light"}
           className="me-1"
           onClick={() => cargarHistorialCajas(i)}
         >
@@ -197,7 +219,10 @@ const CajaDashboard = () => {
     } else {
       const caja = historialCajas.find((c) => c.id === cajaId);
       if (caja) {
-        setMovimientosPorCaja((prev) => ({ ...prev, [cajaId]: caja.movimientos || [] }));
+        setMovimientosPorCaja((prev) => ({
+          ...prev,
+          [cajaId]: caja.movimientos || [],
+        }));
       }
     }
   };
@@ -209,11 +234,11 @@ const CajaDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (tipoMovimiento === 'cobro_cliente') {
+    if (tipoMovimiento === "cobro_cliente") {
       cargarClientes();
     } else {
       setClientes([]);
-      setClienteSeleccionado('');
+      setClienteSeleccionado("");
     }
   }, [tipoMovimiento]);
 
@@ -227,7 +252,11 @@ const CajaDashboard = () => {
         </Alert>
       )}
       {successMsg && (
-        <Alert variant="success" onClose={() => setSuccessMsg(null)} dismissible>
+        <Alert
+          variant="success"
+          onClose={() => setSuccessMsg(null)}
+          dismissible
+        >
           {successMsg}
         </Alert>
       )}
@@ -246,7 +275,7 @@ const CajaDashboard = () => {
       ) : (
         <>
           <h5 className="mt-3">
-            Caja Abierta el {new Date(caja.fecha_apertura).toLocaleString()}{' '}
+            Caja Abierta el {new Date(caja.fecha_apertura).toLocaleString()}{" "}
             <Badge bg="success">Caja Abierta</Badge>
           </h5>
           <p>
@@ -258,7 +287,10 @@ const CajaDashboard = () => {
               <Col md={4}>
                 <Form.Group className="mb-2">
                   <Form.Label>Tipo de Movimiento</Form.Label>
-                  <Form.Select value={tipoMovimiento} onChange={(e) => setTipoMovimiento(e.target.value)}>
+                  <Form.Select
+                    value={tipoMovimiento}
+                    onChange={(e) => setTipoMovimiento(e.target.value)}
+                  >
                     <option value="cobro_cliente">Cobro Cliente</option>
                     <option value="compra_proveedor">Compra Proveedor</option>
                     <option value="ajuste_positivo">Ajuste Positivo</option>
@@ -268,7 +300,7 @@ const CajaDashboard = () => {
                 </Form.Group>
               </Col>
 
-              {tipoMovimiento === 'cobro_cliente' && (
+              {tipoMovimiento === "cobro_cliente" && (
                 <Col md={4}>
                   <Form.Group className="mb-2">
                     <Form.Label>Cliente</Form.Label>
@@ -279,7 +311,7 @@ const CajaDashboard = () => {
                       <option value="">-- Seleccione Cliente --</option>
                       {clientes.map((cliente) => (
                         <option key={cliente.id} value={cliente.id}>
-                          {cliente.nombre + ' ' + cliente.apellido}
+                          {cliente.nombre + " " + cliente.apellido}
                         </option>
                       ))}
                     </Form.Select>
@@ -302,7 +334,10 @@ const CajaDashboard = () => {
               <Col md={4}>
                 <Form.Group className="mb-2">
                   <Form.Label>Método de Pago</Form.Label>
-                  <Form.Select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)}>
+                  <Form.Select
+                    value={metodoPago}
+                    onChange={(e) => setMetodoPago(e.target.value)}
+                  >
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
                     <option value="tarjeta_debito">Tarjeta Débito</option>
@@ -323,8 +358,14 @@ const CajaDashboard = () => {
             </Row>
 
             <div className="mt-3">
-              <Button onClick={handleRegistrarMovimiento}>Registrar Movimiento</Button>
-              <Button variant="danger" className="ms-2" onClick={handleCerrarCaja}>
+              <Button onClick={handleRegistrarMovimiento}>
+                Registrar Movimiento
+              </Button>
+              <Button
+                variant="danger"
+                className="ms-2"
+                onClick={handleCerrarCaja}
+              >
                 Cerrar Caja
               </Button>
             </div>
@@ -349,22 +390,27 @@ const CajaDashboard = () => {
                   <td>
                     <Badge
                       bg={
-                        m.tipo_movimiento.includes('ajuste')
-                          ? 'warning'
-                          : m.tipo_movimiento === 'cobro_cliente'
-                          ? 'success'
-                          : 'danger'
+                        m.tipo_movimiento.includes("ajuste")
+                          ? "warning"
+                          : m.tipo_movimiento === "cobro_cliente"
+                          ? "success"
+                          : "danger"
                       }
                     >
                       {m.tipo_movimiento}
                     </Badge>
                   </td>
-                  <td style={{ color: parseFloat(m.monto_con_signo) < 0 ? 'red' : 'green' }}>
+                  <td
+                    style={{
+                      color:
+                        parseFloat(m.monto_con_signo) < 0 ? "red" : "green",
+                    }}
+                  >
                     {formatCurrency(m.monto_con_signo)}
                   </td>
                   <td>{m.descripcion}</td>
-                  <td>{m.metodo_pago || '-'}</td>
-                  <td>{m.usuario || '-'}</td>
+                  <td>{m.metodo_pago || "-"}</td>
+                  <td>{m.usuario || "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -399,8 +445,8 @@ const CajaDashboard = () => {
         <Button
           variant="secondary"
           onClick={() => {
-            setFechaDesde('');
-            setFechaHasta('');
+            setFechaDesde("");
+            setFechaHasta("");
             cargarHistorialCajas(1);
           }}
           className="mb-2"
@@ -416,7 +462,7 @@ const CajaDashboard = () => {
         className="mb-2"
         onClick={() => setMostrarHistorial(!mostrarHistorial)}
       >
-        {mostrarHistorial ? 'Ocultar Historial' : 'Mostrar Historial'}
+        {mostrarHistorial ? "Ocultar Historial" : "Mostrar Historial"}
       </Button>
 
       {/* Mostrar historial solo si mostrarHistorial es true */}
@@ -431,7 +477,7 @@ const CajaDashboard = () => {
             <Table striped bordered hover responsive>
               <thead>
                 <tr>
-                  <th>ID</th>
+                  {/* <th>ID</th> <-- eliminado */}
                   <th>Fecha Apertura</th>
                   <th>Fecha Cierre</th>
                   <th>Monto Apertura</th>
@@ -444,7 +490,7 @@ const CajaDashboard = () => {
               <tbody>
                 {historialCajas.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="text-center">
+                    <td colSpan="7" className="text-center">
                       No hay cajas en el historial.
                     </td>
                   </tr>
@@ -452,22 +498,33 @@ const CajaDashboard = () => {
                 {historialCajas.map((c) => (
                   <React.Fragment key={c.id}>
                     <tr>
-                      <td>{c.id}</td>
+                      {/* <td>{c.id}</td> <-- eliminado */}
                       <td>{new Date(c.fecha_apertura).toLocaleString()}</td>
-                      <td>{c.fecha_cierre ? new Date(c.fecha_cierre).toLocaleString() : '-'}</td>
-                      <td>{formatCurrency(c.monto_apertura)}</td>
-                      <td>{c.monto_cierre ? formatCurrency(c.monto_cierre) : '-'}</td>
-                      <td>{c.usuario_apertura}</td>
-                      <td>{c.usuario_cierre || '-'}</td>
                       <td>
-                        <Button size="sm" onClick={() => toggleMovimientosCaja(c.id)}>
-                          {movimientosPorCaja[c.id] ? 'Ocultar Movimientos' : 'Ver Movimientos'}
+                        {c.fecha_cierre
+                          ? new Date(c.fecha_cierre).toLocaleString()
+                          : "-"}
+                      </td>
+                      <td>{formatCurrency(c.monto_apertura)}</td>
+                      <td>
+                        {c.monto_cierre ? formatCurrency(c.monto_cierre) : "-"}
+                      </td>
+                      <td>{c.usuario_apertura}</td>
+                      <td>{c.usuario_cierre || "-"}</td>
+                      <td>
+                        <Button
+                          size="sm"
+                          onClick={() => toggleMovimientosCaja(c.id)}
+                        >
+                          {movimientosPorCaja[c.id]
+                            ? "Ocultar Movimientos"
+                            : "Ver Movimientos"}
                         </Button>
                       </td>
                     </tr>
                     {movimientosPorCaja[c.id] && (
                       <tr>
-                        <td colSpan={8}>
+                        <td colSpan={7}>
                           <Table bordered size="sm" responsive>
                             <thead>
                               <tr>
@@ -482,12 +539,18 @@ const CajaDashboard = () => {
                             <tbody>
                               {movimientosPorCaja[c.id].map((mov) => (
                                 <tr key={mov.id}>
-                                  <td>{new Date(mov.fecha_movimiento).toLocaleString()}</td>
+                                  <td>
+                                    {new Date(
+                                      mov.fecha_movimiento
+                                    ).toLocaleString()}
+                                  </td>
                                   <td>{mov.tipo_movimiento}</td>
                                   <td
                                     style={{
                                       color:
-                                        parseFloat(mov.monto_con_signo) < 0 ? 'red' : 'green',
+                                        parseFloat(mov.monto_con_signo) < 0
+                                          ? "red"
+                                          : "green",
                                     }}
                                   >
                                     {formatCurrency(mov.monto_con_signo)}
@@ -496,9 +559,9 @@ const CajaDashboard = () => {
                                   <td>
                                     {mov.cliente_nombre && mov.cliente_apellido
                                       ? `${mov.cliente_nombre} ${mov.cliente_apellido}`
-                                      : '-'}
+                                      : "-"}
                                   </td>
-                                  <td>{mov.metodo_pago || '-'}</td>
+                                  <td>{mov.metodo_pago || "-"}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -511,7 +574,9 @@ const CajaDashboard = () => {
               </tbody>
             </Table>
           )}
-          <div className="d-flex justify-content-center mt-3">{renderPaginacionHistorial()}</div>
+          <div className="d-flex justify-content-center mt-3">
+            {renderPaginacionHistorial()}
+          </div>
         </>
       )}
     </div>
