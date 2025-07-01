@@ -14,7 +14,6 @@ async function getAllClientes(req, res, next) {
       FROM clientes
     `);
 
-    // ⬇⬇⬇ Aquí está el cambio importante
     res.json({
       success: true,
       data: {
@@ -177,7 +176,7 @@ async function getHistorialServiciosByClienteId(req, res, next) {
   }
 }
 
-// Obtener clientes con cumpleaños próximos
+// Obtener clientes con cumpleaños próximos (corrigiendo desfase de zona horaria)
 async function getProximosCumpleanos(req, res, next) {
   const diasAdelanto = parseInt(req.query.dias) || 7;
   
@@ -194,22 +193,26 @@ async function getProximosCumpleanos(req, res, next) {
     const todosLosClientes = await db.query(query);
 
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+    hoy.setUTCHours(0, 0, 0, 0);  // Normalizamos hoy a UTC midnight
 
+    // Fecha límite también en UTC
     const fechaLimite = new Date(hoy);
-    fechaLimite.setDate(hoy.getDate() + diasAdelanto);
+    fechaLimite.setUTCDate(hoy.getUTCDate() + diasAdelanto);
 
     const clientesFiltrados = todosLosClientes.filter(cliente => {
       if (!cliente.fecha_cumpleanos) return false;
 
       const [year, month, day] = cliente.fecha_cumpleanos.split('-').map(Number);
-      let proximoCumple = new Date(hoy.getFullYear(), month - 1, day);
-      proximoCumple.setHours(0, 0, 0, 0);
 
+      // Construimos la fecha del próximo cumpleaños en UTC para este año
+      let proximoCumple = new Date(Date.UTC(hoy.getUTCFullYear(), month - 1, day));
+
+      // Si ya pasó, incrementamos el año
       if (proximoCumple < hoy) {
-        proximoCumple.setFullYear(hoy.getFullYear() + 1);
+        proximoCumple = new Date(Date.UTC(hoy.getUTCFullYear() + 1, month - 1, day));
       }
 
+      // Comparar en UTC
       return proximoCumple >= hoy && proximoCumple <= fechaLimite;
     });
 

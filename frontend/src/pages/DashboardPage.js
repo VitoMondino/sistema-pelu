@@ -81,15 +81,21 @@ const DashboardPage = () => {
                             <div>
                                 {proximosCumples.length > 0 ? (
                                     <ul className="list-unstyled">
-                                        {proximosCumples.map((cliente) => (
-                                            <li key={cliente.id} style={styles.listItem}>
-                                                🎂 {cliente.nombre} {cliente.apellido} —{' '}
-                                                {new Date(cliente.fecha_cumpleanos).toLocaleDateString(
-                                                    'es-ES',
-                                                    { day: '2-digit', month: 'long' }
-                                                )}
-                                            </li>
-                                        ))}
+                                        {proximosCumples.map((cliente) => {
+                                            const [year, month, day] = cliente.fecha_cumpleanos.split('-').map(Number);
+                                            // Crear la fecha sin zona horaria (mes es 0-based)
+                                            const fechaCumple = new Date(year, month - 1, day);
+
+                                            return (
+                                                <li key={cliente.id} style={styles.listItem}>
+                                                    🎂 {cliente.nombre} {cliente.apellido} —{' '}
+                                                    {new Intl.DateTimeFormat('es-AR', {
+                                                        day: '2-digit',
+                                                        month: 'long',
+                                                    }).format(fechaCumple)}
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 ) : (
                                     <p style={styles.subtitle}>No hay cumpleaños próximos en los siguientes 7 días.</p>
