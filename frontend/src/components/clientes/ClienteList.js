@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Table, Button, Alert, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
-import { PencilSquare, TrashFill, EyeFill } from 'react-bootstrap-icons';
+import { PencilSquare, TrashFill, EyeFill, Whatsapp } from 'react-bootstrap-icons';
 
 const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, error }) => {
   if (loading) {
@@ -24,8 +24,6 @@ const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     
-    // Si la fecha viene en formato YYYY-MM-DD, creamos la fecha manualmente
-    // para evitar problemas de zona horaria
     if (dateString.includes('-') && dateString.length === 10) {
       const [year, month, day] = dateString.split('-');
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -35,8 +33,7 @@ const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, 
         year: 'numeric',
       });
     }
-    
-    // Para otros formatos, usar el constructor normal
+
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       day: '2-digit',
@@ -48,6 +45,12 @@ const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, 
   const renderTooltip = (text) => (
     <Tooltip id={`tooltip-${text}`}>{text}</Tooltip>
   );
+
+  const getWhatsappLink = (telefono, nombre) => {
+    const numero = telefono.replace(/\D/g, ''); // Limpia el número (sin espacios ni símbolos)
+    const mensaje = encodeURIComponent(`Hola ${nombre}, ¿cómo estás?`);
+    return `https://wa.me/${numero}?text=${mensaje}`;
+  };
 
   return (
     <Table striped bordered hover responsive className="mt-3 shadow-sm align-middle">
@@ -80,6 +83,7 @@ const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, 
                   <EyeFill />
                 </Button>
               </OverlayTrigger>
+
               <OverlayTrigger placement="top" overlay={renderTooltip('Editar')}>
                 <Button
                   variant="outline-primary"
@@ -90,13 +94,28 @@ const ClienteList = memo(({ clientes, onEdit, onDelete, onViewDetails, loading, 
                   <PencilSquare />
                 </Button>
               </OverlayTrigger>
+
               <OverlayTrigger placement="top" overlay={renderTooltip('Eliminar')}>
                 <Button
                   variant="outline-danger"
                   size="sm"
+                  className="me-2"
                   onClick={() => onDelete(cliente.id)}
                 >
                   <TrashFill />
+                </Button>
+              </OverlayTrigger>
+
+              <OverlayTrigger placement="top" overlay={renderTooltip('Enviar WhatsApp')}>
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  as="a"
+                  href={getWhatsappLink(cliente.telefono, cliente.nombre)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Whatsapp />
                 </Button>
               </OverlayTrigger>
             </td>

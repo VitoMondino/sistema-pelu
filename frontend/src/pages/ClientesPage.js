@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import MainLayout from '../components/MainLayout';
-import { Container, Card, Button, Modal, Alert, Toast, ToastContainer } from 'react-bootstrap';
+import { Container, Card, Button, Modal, Alert, Toast, ToastContainer, Form } from 'react-bootstrap';
 import ClienteList from '../components/clientes/ClienteList';
 import ClienteForm from '../components/clientes/ClienteForm';
 import ConfirmModal from '../components/ConfirmModal';
 import ClienteDetailModal from '../components/clientes/ClienteDetailModal';
 import { fetchClientes, deleteCliente as apiDeleteCliente } from '../api';
-import { PlusCircleFill } from 'react-bootstrap-icons';
+import { PlusCircleFill, Search } from 'react-bootstrap-icons';
 
 const ClientesPage = () => {
     const [clientes, setClientes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [showFormModal, setShowFormModal] = useState(false);
     const [clienteToEdit, setClienteToEdit] = useState(null);
@@ -23,6 +24,22 @@ const ClientesPage = () => {
     const [clienteToViewId, setClienteToViewId] = useState(null);
 
     const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
+
+    // Filtrar clientes por nombre o apellido
+    const clientesFiltrados = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return clientes;
+        }
+        
+        return clientes.filter(cliente => {
+            const nombreCompleto = `${cliente.nombre} ${cliente.apellido}`.toLowerCase();
+            const termino = searchTerm.toLowerCase();
+            
+            return nombreCompleto.includes(termino) || 
+                   cliente.nombre.toLowerCase().includes(termino) ||
+                   cliente.apellido.toLowerCase().includes(termino);
+        });
+    }, [clientes, searchTerm]);
 
     const cargarClientes = useCallback(async () => {
         setLoading(true);
@@ -153,11 +170,33 @@ const ClientesPage = () => {
                     </Button>
                 </div>
 
+                {/* Campo de búsqueda */}
+                <div className="mb-3">
+                    <div className="position-relative" style={{ maxWidth: '400px' }}>
+                        <Form.Control
+                            type="text"
+                            placeholder="Buscar por nombre o apellido..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="ps-5"
+                        />
+                        <Search 
+                            className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" 
+                            size={16}
+                        />
+                    </div>
+                    {searchTerm && (
+                        <small className="text-muted">
+                            Mostrando {clientesFiltrados.length} de {clientes.length} clientes
+                        </small>
+                    )}
+                </div>
+
                 <Card className="shadow-sm">
                     <Card.Header as="h5">Listado de Clientes</Card.Header>
                     <Card.Body>
                         <ClienteList
-                            clientes={clientes}
+                            clientes={clientesFiltrados}
                             onEdit={handleShowFormToEdit}
                             onDelete={handleOpenConfirmDelete}
                             onViewDetails={handleShowDetailModal}
@@ -222,7 +261,6 @@ const ClientesPage = () => {
                         <Toast.Body>{toastInfo.message}</Toast.Body>
                     </Toast>
                 </ToastContainer>
-
             </Container>
         </MainLayout>
     );
