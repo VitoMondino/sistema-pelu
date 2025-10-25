@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../components/MainLayout';
-import { Container, Card, Button, Modal, Alert, Toast, ToastContainer, Row, Col, Form } from 'react-bootstrap';
+import {
+  Container,
+  Card,
+  Button,
+  Modal,
+  Alert,
+  Toast,
+  ToastContainer,
+  Row,
+  Col,
+  Form,
+  Pagination,
+} from 'react-bootstrap';
 import TurnoList from '../components/turnos/TurnoList';
 import TurnoForm from '../components/turnos/TurnoForm';
 import ConfirmModal from '../components/ConfirmModal';
@@ -21,8 +33,12 @@ const TurnosPage = () => {
 
   const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
 
-  const [filtroEstado, setFiltroEstado] = useState(''); // '', 'Pendiente', 'Realizado', 'Cancelado'
-  const [filtroTiempo, setFiltroTiempo] = useState(''); // '', 'dia', 'semana', 'mes'
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroTiempo, setFiltroTiempo] = useState('');
+
+  // 🔹 Estados para la paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // cantidad de turnos por página
 
   const cargarTurnos = useCallback(async () => {
     setLoading(true);
@@ -46,12 +62,10 @@ const TurnosPage = () => {
   useEffect(() => {
     let filtrados = [...turnos];
 
-    // Filtro por estado
     if (filtroEstado) {
       filtrados = filtrados.filter((t) => t.estado === filtroEstado);
     }
 
-    // Filtro por tiempo
     if (filtroTiempo) {
       const now = new Date();
 
@@ -79,10 +93,20 @@ const TurnosPage = () => {
       }
     }
 
-    // Ordenar por fecha ascendente
     filtrados.sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
     setFilteredTurnos(filtrados);
+    setCurrentPage(1); // reinicia a la primera página al cambiar filtros
   }, [turnos, filtroEstado, filtroTiempo]);
+
+  // 🔹 Cálculo de paginación
+  const totalPages = Math.ceil(filteredTurnos.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTurnos = filteredTurnos.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const handleShowFormToAdd = () => {
     setTurnoToEdit(null);
@@ -97,7 +121,11 @@ const TurnosPage = () => {
   const handleFormSuccess = () => {
     setShowFormModal(false);
     cargarTurnos();
-    setToastInfo({ show: true, message: turnoToEdit ? 'Turno actualizado con éxito.' : 'Turno agendado con éxito.', variant: 'success' });
+    setToastInfo({
+      show: true,
+      message: turnoToEdit ? 'Turno actualizado con éxito.' : 'Turno agendado con éxito.',
+      variant: 'success',
+    });
     setTurnoToEdit(null);
   };
 
@@ -176,12 +204,42 @@ const TurnosPage = () => {
           </Card.Header>
           <Card.Body>
             <TurnoList
-              turnos={filteredTurnos}
+              turnos={currentTurnos}
               onEdit={handleShowFormToEdit}
               onDelete={handleOpenConfirmDelete}
               loading={loading}
               error={error && filteredTurnos.length === 0 ? error : null}
             />
+
+            {/* 🔹 Componente de paginación */}
+            {totalPages > 1 && (
+              <div className="d-flex justify-content-center mt-3">
+                <Pagination>
+                  <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
+                  <Pagination.Prev
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  />
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <Pagination.Item
+                      key={i + 1}
+                      active={i + 1 === currentPage}
+                      onClick={() => handlePageChange(i + 1)}
+                    >
+                      {i + 1}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  />
+                  <Pagination.Last
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                  />
+                </Pagination>
+              </div>
+            )}
           </Card.Body>
         </Card>
 
