@@ -23,17 +23,15 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Ejemplo: si el error es 401 (No autorizado), podríamos desloguear al usuario
     if (error.response && error.response.status === 401) {
       // localStorage.removeItem('token');
       // localStorage.removeItem('user');
-      // window.location.href = '/login'; // O usar history.push si está disponible
+      // window.location.href = '/login';
       console.error("Error 401: No autorizado. El token puede haber expirado o es inválido.");
     }
     return Promise.reject(error);
   }
 );
-
 
 export default apiClient;
 
@@ -73,10 +71,6 @@ export const updateStockItem = (id, itemData) => apiClient.put(`/stock/${id}`, i
 export const deleteStockItem = (id) => apiClient.delete(`/stock/${id}`);
 export const createMovimientoStock = (movimientoData) => apiClient.post('/stock/movimiento', movimientoData);
 
-// WhatsApp (si se necesitan endpoints específicos desde el frontend)
-export const getWhatsappStatus = () => apiClient.get('/whatsapp/status');
-// export const sendTestWhatsappMessage = (data) => apiClient.post('/whatsapp/send-test', data);
-
 // Caja
 export const abrirCaja = (data) => apiClient.post('/caja/abrir', data);
 export const cerrarCaja = (data) => apiClient.post('/caja/cerrar', data);
@@ -87,3 +81,12 @@ export const generarReporteCaja = (params) => apiClient.get('/caja/reporte',  { 
 export const obtenerCategoriasGastos = () => apiClient.get('/caja/categorias-gastos');
 export const obtenerHistorialCajas = (params) => apiClient.get('/caja/historial', { params });
 export const obtenerClientes = () => apiClient.get('/clientes');
+
+
+export const fetchAsistencias = () => apiClient.get('/asistencias');
+
+export const fetchAsistenciaByCliente = (clienteId) => apiClient.get(`/asistencias/${clienteId}`);
+
+export const marcarAsistencia = (clienteId) => apiClient.post(`/asistencias/${clienteId}/check`);
+
+export const resetAsistencia = (clienteId) => apiClient.post(`/asistencias/${clienteId}/reset`);

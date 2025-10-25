@@ -290,3 +290,29 @@ CREATE INDEX idx_movimientos_fecha_tipo ON movimientos_caja(fecha_movimiento, ti
 
 -- INSERT INTO movimientos_caja (caja_id, tipo_movimiento, monto, descripcion, usuario_id)
 -- VALUES (1, 'apertura', 1000.00, 'Apertura de caja', 1);
+
+USE peluqueria_db;
+
+ALTER TABLE turnos
+ADD COLUMN turno_fijo BOOLEAN NOT NULL DEFAULT 0,
+ADD COLUMN dia_semana VARCHAR(20) DEFAULT NULL;
+
+
+CREATE TABLE IF NOT EXISTS asistencias (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cliente_id INT NOT NULL UNIQUE,
+  contador TINYINT NOT NULL DEFAULT 0,        -- valor entre 0 y 4
+  ciclo_inicio DATE NOT NULL DEFAULT (CURRENT_DATE()),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS asistencias_historial (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  asistencia_id INT NOT NULL,
+  fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  usuario_id INT NULL,
+  accion ENUM('marcado','reseteado') NOT NULL DEFAULT 'marcado',
+  FOREIGN KEY (asistencia_id) REFERENCES asistencias(id) ON DELETE CASCADE,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);

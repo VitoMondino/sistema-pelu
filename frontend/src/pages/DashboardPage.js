@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Container, Row, Col, Card, Alert } from 'react-bootstrap';
-import { fetchProximosCumpleanos, getWhatsappStatus } from '../api';
 import MainLayout from '../components/MainLayout';
+import { fetchProximosCumpleanos } from '../api';
 
 const DashboardPage = () => {
     const { user } = useAuth();
     const [proximosCumples, setProximosCumples] = useState([]);
-    const [whatsappStatus, setWhatsappStatus] = useState({ isReady: false, message: 'Verificando...' });
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -16,9 +15,6 @@ const DashboardPage = () => {
                 setError('');
                 const cumplesResponse = await fetchProximosCumpleanos(7); 
                 setProximosCumples(cumplesResponse.data);
-
-                const wsStatusResponse = await getWhatsappStatus();
-                setWhatsappStatus(wsStatusResponse.data);
             } catch (err) {
                 setError(err.response?.data?.message || err.message || 'Error al cargar datos.');
             }
@@ -83,7 +79,6 @@ const DashboardPage = () => {
                                     <ul className="list-unstyled">
                                         {proximosCumples.map((cliente) => {
                                             const [year, month, day] = cliente.fecha_cumpleanos.split('-').map(Number);
-                                            // Crear la fecha sin zona horaria (mes es 0-based)
                                             const fechaCumple = new Date(year, month - 1, day);
 
                                             return (
@@ -101,24 +96,6 @@ const DashboardPage = () => {
                                     <p style={styles.subtitle}>No hay cumpleaños próximos en los siguientes 7 días.</p>
                                 )}
                             </div>
-                        </Card>
-                    </Col>
-
-                    <Col md={6} className="mb-4">
-                        <Card style={styles.card}>
-                            <h5 style={styles.cardHeader}>Estado de WhatsApp</h5>
-                            <p>
-                                Servicio:&nbsp;
-                                <span style={styles.statusText(whatsappStatus.isReady)}>
-                                    {whatsappStatus.isReady ? 'Conectado' : 'Desconectado'}
-                                </span>
-                            </p>
-                            <p style={styles.subtitle}>{whatsappStatus.message}</p>
-                            {whatsappStatus.qrCodeAvailable && (
-                                <Alert variant="warning">
-                                    ⚠️ Se requiere escanear código QR. Revisa la consola del backend.
-                                </Alert>
-                            )}
                         </Card>
                     </Col>
                 </Row>

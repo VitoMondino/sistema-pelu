@@ -5,7 +5,13 @@ import ClienteList from '../components/clientes/ClienteList';
 import ClienteForm from '../components/clientes/ClienteForm';
 import ConfirmModal from '../components/ConfirmModal';
 import ClienteDetailModal from '../components/clientes/ClienteDetailModal';
-import { fetchClientes, deleteCliente as apiDeleteCliente } from '../api';
+import {
+  fetchClientes,
+  deleteCliente as apiDeleteCliente,
+  fetchAsistencias,
+  marcarAsistencia,
+  resetAsistencia
+} from '../api';
 import { PlusCircleFill, Search } from 'react-bootstrap-icons';
 
 const ClientesPage = () => {
@@ -25,6 +31,9 @@ const ClientesPage = () => {
 
     const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
 
+    // NUEVO: mapa de asistencias cliente_id -> contador (0..4)
+    const [asistenciasMap, setAsistenciasMap] = useState({});
+
     // Filtrar clientes por nombre o apellido
     const clientesFiltrados = useMemo(() => {
         if (!searchTerm.trim()) {
@@ -32,12 +41,12 @@ const ClientesPage = () => {
         }
         
         return clientes.filter(cliente => {
-            const nombreCompleto = `${cliente.nombre} ${cliente.apellido}`.toLowerCase();
+            const nombreCompleto = `${(cliente.nombre||'')} ${(cliente.apellido||'')}`.toLowerCase();
             const termino = searchTerm.toLowerCase();
             
             return nombreCompleto.includes(termino) || 
-                   cliente.nombre.toLowerCase().includes(termino) ||
-                   cliente.apellido.toLowerCase().includes(termino);
+                   (cliente.nombre||'').toLowerCase().includes(termino) ||
+                   (cliente.apellido||'').toLowerCase().includes(termino);
         });
     }, [clientes, searchTerm]);
 
@@ -46,10 +55,8 @@ const ClientesPage = () => {
         setError('');
         try {
             const response = await fetchClientes();
-            // ✅ CORREGIDO: acceder correctamente a los datos
-            setClientes(response.data.data.clientes || []);
-            // (opcional) console.log para depuración
-            console.log("Clientes recibidos:", response.data.data.clientes);
+            setClientes(response.data?.data?.clientes || []);
+            // console.log("Clientes recibidos:", response.data?.data?.clientes);
         } catch (err) {
             console.error("Error al cargar clientes:", err);
             setError(err.response?.data?.message || err.message || 'Error al cargar clientes.');
@@ -58,9 +65,26 @@ const ClientesPage = () => {
         }
     }, []);
 
+    // NUEVO: cargar asistencias desde backend
+    const cargarAsistencias = useCallback(async () => {
+        try {
+            const res = await fetchAsistencias();
+            const list = res.data?.data || [];
+            const map = {};
+            list.forEach(item => {
+                map[item.cliente_id] = Number(item.contador) || 0;
+            });
+            setAsistenciasMap(map);
+        } catch (err) {
+            console.error('Error al cargar asistencias:', err);
+            // no sobreescribir error principal
+        }
+    }, []);
+
     useEffect(() => {
         cargarClientes();
-    }, [cargarClientes]);
+        cargarAsistencias();
+    }, [cargarClientes, cargarAsistencias]);
 
     const handleShowFormToAdd = () => {
         setClienteToEdit(null);
@@ -103,6 +127,7 @@ const ClientesPage = () => {
     const handleFormSuccess = (clienteGuardado) => {
         setShowFormModal(false);
         cargarClientes();
+        cargarAsistencias(); // actualizar checks después de crear/editar cliente
         setToastInfo({
             show: true,
             message: clienteToEdit 
@@ -131,7 +156,8 @@ const ClientesPage = () => {
             await apiDeleteCliente(clienteToDeleteId);
             setShowConfirmDeleteModal(false);
             setClienteToDeleteId(null);
-            cargarClientes();
+            await cargarClientes();
+            await cargarAsistencias();
             setToastInfo({ 
                 show: true, 
                 message: 'Cliente eliminado con éxito.', 
@@ -147,6 +173,30 @@ const ClientesPage = () => {
                 message: `Error al eliminar cliente: ${errorMessage}`, 
                 variant: 'danger' 
             });
+        }
+    };
+
+    // NUEVO: marcar un corte (incrementar contador; backend reinicia a 0 cuando llega a 4)
+    const handleMarkAsistencia = async (clienteId) => {
+        try {
+            const res = await marcarAsistencia(clienteId);
+            await cargarAsistencias();
+            setToastInfo({ show: true, message: res.data?.message || 'Asistencia marcada', variant: 'success' });
+        } catch (err) {
+            console.error('Error al marcar asistencia:', err);
+            setToastInfo({ show: true, message: err.response?.data?.message || 'Error al marcar asistencia', variant: 'danger' });
+        }
+    };
+
+    // NUEVO: resetear contador manualmente
+    const handleResetAsistencia = async (clienteId) => {
+        try {
+            const res = await resetAsistencia(clienteId);
+            await cargarAsistencias();
+            setToastInfo({ show: true, message: res.data?.message || 'Contador reiniciado', variant: 'success' });
+        } catch (err) {
+            console.error('Error al resetear asistencia:', err);
+            setToastInfo({ show: true, message: err.response?.data?.message || 'Error al resetear', variant: 'danger' });
         }
     };
 
@@ -202,6 +252,9 @@ const ClientesPage = () => {
                             onViewDetails={handleShowDetailModal}
                             loading={loading}
                             error={error && clientes.length === 0 ? error : null}
+                            asistenciasMap={asistenciasMap}              // NUEVO: pasar mapa de checks
+                            onMarkAsistencia={handleMarkAsistencia}     // NUEVO: handler para marcar
+                            onResetAsistencia={handleResetAsistencia}   // NUEVO: handler para resetear
                         />
                     </Card.Body>
                 </Card>
