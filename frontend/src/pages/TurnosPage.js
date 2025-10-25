@@ -1,3 +1,4 @@
+// ...existing code...
 import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../components/MainLayout';
 import {
@@ -40,12 +41,17 @@ const TurnosPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // cantidad de turnos por página
 
+  // 🔹 Nuevo: filtro por fecha (YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState('');
+
   const cargarTurnos = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const response = await fetchTurnos();
-      const sortedTurnos = response.data.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+      // response.data puede venir en distintas formas; aquí se asume array
+      const dataArray = Array.isArray(response.data) ? response.data : (response.data?.data?.turnos || response.data?.turnos || []);
+      const sortedTurnos = (dataArray || []).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
       setTurnos(sortedTurnos);
     } catch (err) {
       console.error('Error al cargar turnos:', err);
@@ -93,10 +99,23 @@ const TurnosPage = () => {
       }
     }
 
+    // Aplicar filtro por fecha seleccionada (selectedDate en formato YYYY-MM-DD)
+    if (selectedDate) {
+      filtrados = filtrados.filter((t) => {
+        try {
+          const fecha = new Date(t.fecha_hora);
+          const iso = fecha.toISOString().slice(0, 10);
+          return iso === selectedDate;
+        } catch {
+          return false;
+        }
+      });
+    }
+
     filtrados.sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
     setFilteredTurnos(filtrados);
     setCurrentPage(1); // reinicia a la primera página al cambiar filtros
-  }, [turnos, filtroEstado, filtroTiempo]);
+  }, [turnos, filtroEstado, filtroTiempo, selectedDate]);
 
   // 🔹 Cálculo de paginación
   const totalPages = Math.ceil(filteredTurnos.length / itemsPerPage);
@@ -150,6 +169,19 @@ const TurnosPage = () => {
     }
   };
 
+  // 🔹 Handlers para búsqueda por fecha y limpiar filtros
+  const handleSearchByDate = () => {
+    // selectedDate ya está en el estado por el input; solo reiniciamos página para ver resultado
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setFiltroEstado('');
+    setFiltroTiempo('');
+    setSelectedDate('');
+    setCurrentPage(1);
+  };
+
   return (
     <MainLayout>
       <Container fluid>
@@ -173,7 +205,7 @@ const TurnosPage = () => {
         <Card className="shadow-sm">
           <Card.Header as="h5" className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             Listado de Turnos
-            <div className="d-flex gap-2" style={{ width: '420px' }}>
+            <div className="d-flex gap-2 align-items-center" style={{ width: '760px' }}>
               <Form.Group controlId="filtroEstadoTurno" style={{ flex: 1 }}>
                 <Form.Select
                   aria-label="Filtrar por estado"
@@ -187,6 +219,7 @@ const TurnosPage = () => {
                   <option value="Cancelado">Cancelados</option>
                 </Form.Select>
               </Form.Group>
+
               <Form.Group controlId="filtroTiempoTurno" style={{ flex: 1 }}>
                 <Form.Select
                   aria-label="Filtrar por tiempo"
@@ -199,6 +232,19 @@ const TurnosPage = () => {
                   <option value="semana">Esta semana</option>
                   <option value="mes">Este mes</option>
                 </Form.Select>
+              </Form.Group>
+
+              {/* Nuevo: selector de fecha y botones */}
+              <Form.Group controlId="filtroFecha" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <Form.Control
+                  type="date"
+                  size="sm"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  title="Filtrar por fecha"
+                />
+                <Button size="sm" variant="primary" onClick={handleSearchByDate}>Buscar</Button>
+                <Button size="sm" variant="outline-secondary" onClick={handleClearFilters}>Limpiar</Button>
               </Form.Group>
             </div>
           </Card.Header>
