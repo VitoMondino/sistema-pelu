@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Tabs, Tab, Table, Alert, Spinner, Card } from 'react-bootstrap';
-import { fetchClienteById, fetchHistorialServiciosByClienteId } from '../../api'; // Necesitas crear esta función en api.js
+import { fetchClienteById, fetchHistorialServiciosByClienteId } from '../../api';
 
 const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
     const [cliente, setCliente] = useState(null);
@@ -10,6 +10,11 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('detalles');
 
+    // 🔹 Estados para filtro y paginación del historial
+    const [filtroFecha, setFiltroFecha] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
     useEffect(() => {
         if (show && clienteId) {
             const cargarDatosCliente = async () => {
@@ -18,22 +23,20 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
                 try {
                     const responseCliente = await fetchClienteById(clienteId);
                     setCliente(responseCliente.data);
-                    // Cargar historial solo después de cargar el cliente, o en paralelo si se prefiere
-                    // cargarHistorial(clienteId); // Se llama al cambiar de tab o al inicio
                 } catch (err) {
                     console.error("Error al cargar datos del cliente:", err);
                     setError(err.response?.data?.message || err.message || 'Error al cargar datos del cliente.');
-                    setCliente(null); // Limpiar por si había datos previos
+                    setCliente(null);
                 } finally {
                     setLoadingCliente(false);
                 }
             };
             cargarDatosCliente();
-            // Resetear historial y tab al abrir
             setHistorial([]);
             setActiveTab('detalles');
+            setCurrentPage(1);
+            setFiltroFecha('');
         } else {
-            // Limpiar datos cuando el modal se cierra o no hay clienteId
             setCliente(null);
             setHistorial([]);
             setError('');
@@ -43,10 +46,13 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
     const cargarHistorial = async (id) => {
         if (!id) return;
         setLoadingHistorial(true);
-        setError(''); // Limpiar error específico de historial
+        setError('');
         try {
             const responseHistorial = await fetchHistorialServiciosByClienteId(id);
-            setHistorial(responseHistorial.data);
+            // Ordenar de más reciente a más antiguo
+            const sorted = responseHistorial.data.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+            setHistorial(sorted);
+            setCurrentPage(1);
         } catch (err) {
             console.error("Error al cargar historial de servicios:", err);
             setError(err.response?.data?.message || err.message || 'Error al cargar historial.');
@@ -56,12 +62,12 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
     };
 
     useEffect(() => {
-        if (activeTab === 'historial' && clienteId && cliente) { // Cargar historial solo si la tab está activa y hay cliente
+        if (activeTab === 'historial' && clienteId && cliente) {
             cargarHistorial(clienteId);
         }
     }, [activeTab, clienteId, cliente]);
 
-
+    // 🔸 Funciones auxiliares
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -86,6 +92,18 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
         }
     };
 
+    // 🔹 Filtro y paginación aplicados al historial
+    const filteredHistorial = filtroFecha
+        ? historial.filter(item => {
+            const fecha = new Date(item.fecha_hora).toISOString().split('T')[0];
+            return fecha === filtroFecha;
+        })
+        : historial;
+
+    const totalPages = Math.ceil(filteredHistorial.length / itemsPerPage);
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentHistorial = filteredHistorial.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
         <Modal show={show} onHide={onHide} size="lg" centered>
@@ -94,14 +112,17 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
                     {loadingCliente ? 'Cargando...' : (cliente ? `${cliente.nombre} ${cliente.apellido}` : 'Detalles del Cliente')}
                 </Modal.Title>
             </Modal.Header>
+
             <Modal.Body>
                 {error && <Alert variant="danger">{error}</Alert>}
+
                 {loadingCliente && !cliente && (
                     <div className="text-center"><Spinner animation="border" /> <p>Cargando detalles del cliente...</p></div>
                 )}
 
                 {cliente && (
                     <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k)} id="cliente-detail-tabs" className="mb-3">
+                        {/* 🧾 Detalles del cliente */}
                         <Tab eventKey="detalles" title="Detalles del Cliente">
                             <Card>
                                 <Card.Body>
@@ -123,39 +144,96 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
                                 </Card.Body>
                             </Card>
                         </Tab>
+
+                        {/* 📜 Historial con filtro y paginación */}
                         <Tab eventKey="historial" title="Historial de Servicios">
                             {loadingHistorial && (
-                                <div className="text-center"><Spinner animation="border" /> <p>Cargando historial...</p></div>
+                                <div className="text-center">
+                                    <Spinner animation="border" /> <p>Cargando historial...</p>
+                                </div>
                             )}
+
                             {!loadingHistorial && historial.length === 0 && (
                                 <Alert variant="info">Este cliente no tiene historial de servicios.</Alert>
                             )}
+
                             {!loadingHistorial && historial.length > 0 && (
-                                <Table striped bordered hover responsive size="sm">
-                                    <thead className="table-dark">
-                                        <tr>
-                                            <th>Fecha y Hora</th>
-                                            <th>Servicio</th>
-                                            <th>Precio</th>
-                                            <th>Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {historial.map(item => (
-                                            <tr key={item.turno_id}>
-                                                <td>{formatDateTime(item.fecha_hora)}</td>
-                                                <td>{item.nombre_servicio}</td>
-                                                <td>{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.precio_servicio)}</td>
-                                                <td>{getEstadoBadge(item.estado_turno)}</td>
+                                <>
+                                    {/* 🔍 Filtro por fecha + botón limpiar */}
+                                    <div className="d-flex justify-content-start align-items-center gap-2 mb-3">
+                                        <label className="fw-bold mb-0">Filtrar por fecha:</label>
+                                        <input
+                                            type="date"
+                                            value={filtroFecha}
+                                            onChange={(e) => {
+                                                setFiltroFecha(e.target.value);
+                                                setCurrentPage(1);
+                                            }}
+                                            className="form-control w-auto"
+                                        />
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setFiltroFecha('');
+                                                setCurrentPage(1);
+                                            }}
+                                        >
+                                            Limpiar filtro
+                                        </Button>
+                                    </div>
+
+                                    {/* 🧮 Tabla con paginación */}
+                                    <Table striped bordered hover responsive size="sm">
+                                        <thead className="table-dark">
+                                            <tr>
+                                                <th>Fecha y Hora</th>
+                                                <th>Servicio</th>
+                                                <th>Precio</th>
+                                                <th>Estado</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </Table>
+                                        </thead>
+                                        <tbody>
+                                            {currentHistorial.map(item => (
+                                                <tr key={item.turno_id}>
+                                                    <td>{formatDateTime(item.fecha_hora)}</td>
+                                                    <td>{item.nombre_servicio}</td>
+                                                    <td>{new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.precio_servicio)}</td>
+                                                    <td>{getEstadoBadge(item.estado_turno)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </Table>
+
+                                    {/* 🔢 Controles de paginación */}
+                                    <div className="d-flex justify-content-center align-items-center mt-2">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(prev => prev - 1)}
+                                        >
+                                            Anterior
+                                        </Button>
+                                        <span className="mx-3">
+                                            Página {currentPage} de {totalPages || 1}
+                                        </span>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            disabled={currentPage === totalPages || totalPages === 0}
+                                            onClick={() => setCurrentPage(prev => prev + 1)}
+                                        >
+                                            Siguiente
+                                        </Button>
+                                    </div>
+                                </>
                             )}
                         </Tab>
                     </Tabs>
                 )}
             </Modal.Body>
+
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>
                     Cerrar
