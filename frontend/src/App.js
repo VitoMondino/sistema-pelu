@@ -8,6 +8,7 @@ import ServiciosPage from './pages/ServiciosPage';
 import TurnosPage from './pages/TurnosPage';
 import StockPage from './pages/StockPage';
 import CajaPage from './pages/CajaPage';
+import MovimientosPage from './pages/StockMovimientosPage';
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
@@ -58,7 +59,10 @@ function MainApp() {
       <Route path="/servicios" element={<ProtectedRoute><ServiciosPage /></ProtectedRoute>} />
       <Route path="/turnos" element={<ProtectedRoute><TurnosPage /></ProtectedRoute>} />
       <Route path="/stock" element={<ProtectedRoute><StockPage /></ProtectedRoute>} />
-      <Route path="/caja" element={<ProtectedRoute><CajaPage /></ProtectedRoute>} /> {/* ✅ Nueva ruta */}
+      <Route path="/caja" element={<ProtectedRoute><CajaPage /></ProtectedRoute>} /> 
+      {/* Ruta para movimientos: mantener compatibilidad con ambos paths */}
+      <Route path="/movimientos" element={<ProtectedRoute><MovimientosPage /></ProtectedRoute>} />
+      <Route path="/stock/movimientos" element={<ProtectedRoute><MovimientosPage /></ProtectedRoute>} />
 
       {/* Ruta por defecto */}
       <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />

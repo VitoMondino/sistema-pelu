@@ -24,9 +24,9 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // localStorage.removeItem('token');
-      // localStorage.removeItem('user');
-      // window.location.href = '/login';
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
       console.error("Error 401: No autorizado. El token puede haber expirado o es inválido.");
     }
     return Promise.reject(error);
@@ -90,3 +90,5 @@ export const fetchAsistenciaByCliente = (clienteId) => apiClient.get(`/asistenci
 export const marcarAsistencia = (clienteId) => apiClient.post(`/asistencias/${clienteId}/check`);
 
 export const resetAsistencia = (clienteId) => apiClient.post(`/asistencias/${clienteId}/reset`);
+
+export const fetchStockMovimientos = (params) => apiClient.get('/stock/movimientos', { params });

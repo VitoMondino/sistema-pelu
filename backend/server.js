@@ -9,6 +9,8 @@ const turnoRoutes = require('./routes/turnos');
 const stockRoutes = require('./routes/stock');
 const cajaRoutes = require('./routes/caja');
 const asistenciaRoutes = require('./routes/asistencia');
+// ...existing code...
+// Nota: se eliminó require('./routes/movimientosStock') porque no existe el archivo
 
 const app = express();
 
@@ -22,14 +24,17 @@ app.get('/', (req, res) => {
   res.json({ message: 'Bienvenido a la API de Peluquería MVsalonUrbano' });
 });
 
-// Usar rutas (se habilitarán más adelante)
+// Usar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api/turnos', turnoRoutes);
-app.use('/api/stock', stockRoutes);
+app.use('/api/stock', stockRoutes); // stockRoutes ya expone GET /movimientos
 app.use('/api/caja', cajaRoutes);
 app.use('/api/asistencias', asistenciaRoutes);
+
+// No montar rutas inexistentes para evitar ReferenceError / MODULE_NOT_FOUND
+// Si más adelante creas routes/movimientosStock.js puedes requerirla y montarla aquí.
 
 // Middleware para manejo de errores (simple por ahora)
 app.use((err, req, res, next) => {
@@ -43,3 +48,4 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+// ...existing code...

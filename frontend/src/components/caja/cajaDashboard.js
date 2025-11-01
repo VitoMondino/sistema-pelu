@@ -28,7 +28,7 @@ const CajaDashboard = () => {
   const [tipoMovimiento, setTipoMovimiento] = useState("cobro_cliente");
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
-  const [metodoPago, setMetodoPago] = useState("efectivo"); // <-- nuevo estado
+  const [metodoPago, setMetodoPago] = useState("efectivo");
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
@@ -38,12 +38,6 @@ const CajaDashboard = () => {
   const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   const [movimientosPorCaja, setMovimientosPorCaja] = useState({});
-
-  // Nuevos estados para filtro de fechas
-  const [fechaDesde, setFechaDesde] = useState("");
-  const [fechaHasta, setFechaHasta] = useState("");
-
-  // Estado para mostrar u ocultar historial
   const [mostrarHistorial, setMostrarHistorial] = useState(true);
 
   const cargarCaja = async () => {
@@ -62,9 +56,6 @@ const CajaDashboard = () => {
     setLoadingHistorial(true);
     try {
       const params = { page: pagina, limit: 5 };
-      if (fechaDesde) params.fecha_desde = fechaDesde;
-      if (fechaHasta) params.fecha_hasta = fechaHasta;
-
       const res = await obtenerHistorialCajas(params);
       if (res.data.success) {
         setHistorialCajas(res.data.data.cajas);
@@ -94,11 +85,7 @@ const CajaDashboard = () => {
   };
 
   const handleAbrirCaja = async () => {
-    if (
-      !montoApertura ||
-      isNaN(montoApertura) ||
-      parseFloat(montoApertura) <= 0
-    ) {
+    if (!montoApertura || isNaN(montoApertura) || parseFloat(montoApertura) <= 0) {
       setError("Ingrese un monto de apertura válido");
       return;
     }
@@ -118,11 +105,7 @@ const CajaDashboard = () => {
   };
 
   const handleRegistrarMovimiento = async () => {
-    if (
-      !montoMovimiento ||
-      isNaN(montoMovimiento) ||
-      parseFloat(montoMovimiento) <= 0
-    ) {
+    if (!montoMovimiento || isNaN(montoMovimiento) || parseFloat(montoMovimiento) <= 0) {
       setError("Por favor, ingrese un monto válido para el movimiento.");
       return;
     }
@@ -141,7 +124,7 @@ const CajaDashboard = () => {
         monto: parseFloat(montoMovimiento),
         descripcion,
         usuario_id: usuarioId,
-        metodo_pago: metodoPago, // <-- agregamos el método de pago
+        metodo_pago: metodoPago,
       };
 
       if (tipoMovimiento === "cobro_cliente") {
@@ -154,7 +137,7 @@ const CajaDashboard = () => {
       setDescripcion("");
       setMontoMovimiento("");
       setClienteSeleccionado("");
-      setMetodoPago("efectivo"); // <-- reset método de pago
+      setMetodoPago("efectivo");
       await cargarCaja();
       await cargarHistorialCajas(pageHistorial);
     } catch (err) {
@@ -230,7 +213,6 @@ const CajaDashboard = () => {
   useEffect(() => {
     cargarCaja();
     cargarHistorialCajas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -418,43 +400,6 @@ const CajaDashboard = () => {
         </>
       )}
 
-      {/* Formulario filtro fechas */}
-      <Form className="mb-3 d-flex gap-2 align-items-end flex-wrap">
-        <Form.Group controlId="fechaDesde" className="me-2">
-          <Form.Label>Fecha Desde</Form.Label>
-          <Form.Control
-            type="date"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-          />
-        </Form.Group>
-
-        <Form.Group controlId="fechaHasta" className="me-2">
-          <Form.Label>Fecha Hasta</Form.Label>
-          <Form.Control
-            type="date"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-          />
-        </Form.Group>
-
-        <Button onClick={() => cargarHistorialCajas(1)} className="mb-2">
-          Filtrar
-        </Button>
-
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setFechaDesde("");
-            setFechaHasta("");
-            cargarHistorialCajas(1);
-          }}
-          className="mb-2"
-        >
-          Limpiar Filtro
-        </Button>
-      </Form>
-
       {/* Botón para mostrar/ocultar historial */}
       <Button
         variant="secondary"
@@ -465,7 +410,6 @@ const CajaDashboard = () => {
         {mostrarHistorial ? "Ocultar Historial" : "Mostrar Historial"}
       </Button>
 
-      {/* Mostrar historial solo si mostrarHistorial es true */}
       {mostrarHistorial && (
         <>
           <h4 className="mt-4">Historial de Cajas</h4>
@@ -477,7 +421,6 @@ const CajaDashboard = () => {
             <Table striped bordered hover responsive>
               <thead>
                 <tr>
-                  {/* <th>ID</th> <-- eliminado */}
                   <th>Fecha Apertura</th>
                   <th>Fecha Cierre</th>
                   <th>Monto Apertura</th>
@@ -498,7 +441,6 @@ const CajaDashboard = () => {
                 {historialCajas.map((c) => (
                   <React.Fragment key={c.id}>
                     <tr>
-                      {/* <td>{c.id}</td> <-- eliminado */}
                       <td>{new Date(c.fecha_apertura).toLocaleString()}</td>
                       <td>
                         {c.fecha_cierre
@@ -506,9 +448,7 @@ const CajaDashboard = () => {
                           : "-"}
                       </td>
                       <td>{formatCurrency(c.monto_apertura)}</td>
-                      <td>
-                        {c.monto_cierre ? formatCurrency(c.monto_cierre) : "-"}
-                      </td>
+                      <td>{c.monto_cierre ? formatCurrency(c.monto_cierre) : "-"}</td>
                       <td>{c.usuario_apertura}</td>
                       <td>{c.usuario_cierre || "-"}</td>
                       <td>
@@ -539,11 +479,7 @@ const CajaDashboard = () => {
                             <tbody>
                               {movimientosPorCaja[c.id].map((mov) => (
                                 <tr key={mov.id}>
-                                  <td>
-                                    {new Date(
-                                      mov.fecha_movimiento
-                                    ).toLocaleString()}
-                                  </td>
+                                  <td>{new Date(mov.fecha_movimiento).toLocaleString()}</td>
                                   <td>{mov.tipo_movimiento}</td>
                                   <td
                                     style={{

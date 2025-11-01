@@ -236,12 +236,61 @@ async function createMovimientoStock(req, res, next) {
     next(error);
   }
 }
+async function getMovimientosStock(req, res, next) {
+  try {
+    const { 
+      fecha_desde, 
+      fecha_hasta, 
+      producto_id, 
+      tipo_movimiento 
+    } = req.query;
 
+    let query = `
+      SELECT 
+        ms.*, 
+        s.nombre_producto,
+        t.fecha_hora as turno_fecha,
+        CONCAT(c.nombre, ' ', c.apellido) as cliente_nombre
+      FROM movimientos_stock ms
+      JOIN stock s ON ms.producto_id = s.id
+      LEFT JOIN turnos t ON ms.turno_id = t.id
+      LEFT JOIN clientes c ON t.cliente_id = c.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (fecha_desde) {
+      query += ` AND DATE(ms.fecha_movimiento) >= ?`;
+      params.push(fecha_desde);
+    }
+    if (fecha_hasta) {
+      query += ` AND DATE(ms.fecha_movimiento) <= ?`;
+      params.push(fecha_hasta);
+    }
+    if (producto_id) {
+      query += ` AND ms.producto_id = ?`;
+      params.push(producto_id);
+    }
+    if (tipo_movimiento) {
+      query += ` AND ms.tipo_movimiento = ?`;
+      params.push(tipo_movimiento);
+    }
+
+    query += ` ORDER BY ms.fecha_movimiento DESC`;
+
+    const [movimientos] = await db.query(query, params);
+    
+    res.json({ data: movimientos });
+  } catch (error) {
+    next(error);
+  }
+}
 module.exports = {
   getAllStock,
   getStockById,
   createStock,
   updateStock,
   deleteStock,
+  getMovimientosStock,
   createMovimientoStock,
 };

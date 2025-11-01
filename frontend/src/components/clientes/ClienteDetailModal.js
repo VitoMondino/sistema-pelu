@@ -159,7 +159,7 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
 
                             {!loadingHistorial && historial.length > 0 && (
                                 <>
-                                    {/* 🔍 Filtro por fecha + botón limpiar */}
+                                    {/* Filtro por fecha + botón limpiar */}
                                     <div className="d-flex justify-content-start align-items-center gap-2 mb-3">
                                         <label className="fw-bold mb-0">Filtrar por fecha:</label>
                                         <input
@@ -183,7 +183,7 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
                                         </Button>
                                     </div>
 
-                                    {/* 🧮 Tabla con paginación */}
+                                    {/*  Tabla con paginación */}
                                     <Table striped bordered hover responsive size="sm">
                                         <thead className="table-dark">
                                             <tr>
@@ -205,7 +205,7 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
                                         </tbody>
                                     </Table>
 
-                                    {/* 🔢 Controles de paginación */}
+                                    {/* Controles de paginación */}
                                     <div className="d-flex justify-content-center align-items-center mt-2">
                                         <Button
                                             variant="secondary"
