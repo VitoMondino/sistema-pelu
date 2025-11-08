@@ -92,3 +92,11 @@ export const marcarAsistencia = (clienteId) => apiClient.post(`/asistencias/${cl
 export const resetAsistencia = (clienteId) => apiClient.post(`/asistencias/${clienteId}/reset`);
 
 export const fetchStockMovimientos = (params) => apiClient.get('/stock/movimientos', { params });
+
+
+export const fetchProveedores = () => apiClient.get('/proveedores');
+export const fetchProveedor = (id) => apiClient.get(`/proveedores/${id}`);
+export const createProveedor = (data) => apiClient.post('/proveedores', data);
+export const updateProveedor = (id, data) => apiClient.put(`/proveedores/${id}`, data);
+export const deleteProveedor = (id) => apiClient.delete(`/proveedores/${id}`);
+export const toggleProveedorActivo = (id) => apiClient.patch(`/proveedores/${id}/toggle-activo`);

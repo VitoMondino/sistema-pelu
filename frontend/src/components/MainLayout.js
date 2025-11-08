@@ -24,7 +24,9 @@ const navLinks = [
     { path: "/servicios", label: "Servicios", icon: <Scissors className="me-2" /> },
     { path: "/turnos", label: "Turnos", icon: <CalendarCheckFill className="me-2" /> },
     { path: "/stock", label: "Stock", icon: <BoxFill className="me-2" /> },
-    { path: "/caja", label: "Caja", icon: <CashStack className="me-2" /> }
+    { path: "/caja", label: "Caja", icon: <CashStack className="me-2" /> },
+    { path: "/proveedores", label: "Proveedores", icon: <PeopleFill className="me-2" /> },
+
 ];
 
 

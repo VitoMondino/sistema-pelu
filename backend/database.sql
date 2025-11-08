@@ -316,3 +316,22 @@ CREATE TABLE IF NOT EXISTS asistencias_historial (
   FOREIGN KEY (asistencia_id) REFERENCES asistencias(id) ON DELETE CASCADE,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 );
+
+-- Tabla de Proveedores
+CREATE TABLE IF NOT EXISTS proveedores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    apellido VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    email VARCHAR(255),
+    ubicacion TEXT,
+    activo BOOLEAN DEFAULT TRUE,
+    historial_compras TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Crear índices para optimizar búsquedas
+CREATE INDEX idx_proveedor_nombre ON proveedores(nombre, apellido);
+CREATE INDEX idx_proveedor_telefono ON proveedores(telefono);
+CREATE INDEX idx_proveedor_activo ON proveedores(activo);

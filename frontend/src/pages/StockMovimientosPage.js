@@ -1,4 +1,3 @@
-// ...existing code...
 import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../components/MainLayout';
 import { 
@@ -6,7 +5,6 @@ import {
   Badge, Alert, Spinner 
 } from 'react-bootstrap';
 import { fetchStock, fetchStockMovimientos } from '../api';
-// ...existing code...
 
 const StockMovimientosPage = () => {
   const [movimientos, setMovimientos] = useState([]);

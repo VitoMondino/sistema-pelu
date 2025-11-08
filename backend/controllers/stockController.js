@@ -245,6 +245,31 @@ async function getMovimientosStock(req, res, next) {
       tipo_movimiento 
     } = req.query;
 
+    // Validaciones
+    if (fecha_desde && isNaN(Date.parse(fecha_desde))) {
+      return res.status(400).json({ message: 'La fecha desde no es válida.' });
+    }
+    if (fecha_hasta && isNaN(Date.parse(fecha_hasta))) {
+      return res.status(400).json({ message: 'La fecha hasta no es válida.' });
+    }
+    if (producto_id && isNaN(parseInt(producto_id))) {
+      return res.status(400).json({ message: 'El ID del producto debe ser un número.' });
+    }
+    const tiposValidos = [
+      'entrada_manual',
+      'salida_manual',
+      'ajuste_positivo',
+      'ajuste_negativo',
+      'venta',
+      'venta_anulada',
+      'uso_interno',
+      'compra_proveedor',
+      'devolucion_proveedor',
+    ];
+    if (tipo_movimiento && !tiposValidos.includes(tipo_movimiento)) {
+      return res.status(400).json({ message: `Tipo de movimiento inválido. Válidos: ${tiposValidos.join(', ')}` });
+    }
+
     let query = `
       SELECT 
         ms.*, 

@@ -1,7 +1,7 @@
 const express = require('express');
-const cors = require('cors'); // Instalaremos cors más adelante
+const cors = require('cors'); 
 const config = require('./config');
-// Rutas (se crearán más adelante)
+
 const authRoutes = require('./routes/auth');
 const clienteRoutes = require('./routes/clientes');
 const servicioRoutes = require('./routes/servicios');
@@ -9,8 +9,10 @@ const turnoRoutes = require('./routes/turnos');
 const stockRoutes = require('./routes/stock');
 const cajaRoutes = require('./routes/caja');
 const asistenciaRoutes = require('./routes/asistencia');
-// ...existing code...
-// Nota: se eliminó require('./routes/movimientosStock') porque no existe el archivo
+//const movimientoStockRoutes = require('./routes/movimientosStock');
+const proveedorRoutes = require('./routes/proveedor');
+
+
 
 const app = express();
 
@@ -21,7 +23,7 @@ app.use(express.urlencoded({ extended: true })); // Para parsear application/x-w
 
 // Rutas base
 app.get('/', (req, res) => {
-  res.json({ message: 'Bienvenido a la API de Peluquería MVsalonUrbano' });
+  res.json({ message: 'Bienvenido a Peluquería MV Salon Urbano' });
 });
 
 // Usar rutas
@@ -32,6 +34,8 @@ app.use('/api/turnos', turnoRoutes);
 app.use('/api/stock', stockRoutes); // stockRoutes ya expone GET /movimientos
 app.use('/api/caja', cajaRoutes);
 app.use('/api/asistencias', asistenciaRoutes);
+app.use('/api/proveedores', proveedorRoutes);
+//app.use('/api/movimientos-stock', movimientoStockRoutes);
 
 // No montar rutas inexistentes para evitar ReferenceError / MODULE_NOT_FOUND
 // Si más adelante creas routes/movimientosStock.js puedes requerirla y montarla aquí.
@@ -48,4 +52,3 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
-// ...existing code...
