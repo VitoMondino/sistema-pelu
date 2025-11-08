@@ -236,6 +236,8 @@ async function createMovimientoStock(req, res, next) {
     next(error);
   }
 }
+
+// Obtener movimientos de stock con filtros
 async function getMovimientosStock(req, res, next) {
   try {
     const { 
@@ -303,13 +305,14 @@ async function getMovimientosStock(req, res, next) {
 
     query += ` ORDER BY ms.fecha_movimiento DESC`;
 
-    const [movimientos] = await db.query(query, params);
+    const movimientos = await db.query(query, params);
     
     res.json({ data: movimientos });
   } catch (error) {
     next(error);
   }
 }
+
 module.exports = {
   getAllStock,
   getStockById,
