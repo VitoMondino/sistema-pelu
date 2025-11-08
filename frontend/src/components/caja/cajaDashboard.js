@@ -16,6 +16,7 @@ import {
   Col,
   Badge,
   Spinner,
+  Modal,
 } from "react-bootstrap";
 
 const CajaDashboard = () => {
@@ -39,6 +40,10 @@ const CajaDashboard = () => {
 
   const [movimientosPorCaja, setMovimientosPorCaja] = useState({});
   const [mostrarHistorial, setMostrarHistorial] = useState(true);
+
+  // Estados del modal de cierre de caja
+  const [showModalCerrar, setShowModalCerrar] = useState(false);
+  const [montoCierre, setMontoCierre] = useState("");
 
   const cargarCaja = async () => {
     try {
@@ -85,7 +90,11 @@ const CajaDashboard = () => {
   };
 
   const handleAbrirCaja = async () => {
-    if (!montoApertura || isNaN(montoApertura) || parseFloat(montoApertura) <= 0) {
+    if (
+      !montoApertura ||
+      isNaN(montoApertura) ||
+      parseFloat(montoApertura) <= 0
+    ) {
       setError("Ingrese un monto de apertura válido");
       return;
     }
@@ -105,7 +114,11 @@ const CajaDashboard = () => {
   };
 
   const handleRegistrarMovimiento = async () => {
-    if (!montoMovimiento || isNaN(montoMovimiento) || parseFloat(montoMovimiento) <= 0) {
+    if (
+      !montoMovimiento ||
+      isNaN(montoMovimiento) ||
+      parseFloat(montoMovimiento) <= 0
+    ) {
       setError("Por favor, ingrese un monto válido para el movimiento.");
       return;
     }
@@ -145,10 +158,9 @@ const CajaDashboard = () => {
     }
   };
 
+  // Cierre de caja con modal
   const handleCerrarCaja = async () => {
-    const monto = prompt("Monto de cierre:");
-    if (!monto) return;
-    if (isNaN(monto) || parseFloat(monto) < 0) {
+    if (!montoCierre || isNaN(montoCierre) || parseFloat(montoCierre) < 0) {
       setError("Ingrese un monto válido para cierre");
       return;
     }
@@ -156,10 +168,12 @@ const CajaDashboard = () => {
       await cerrarCaja({
         caja_id: caja.id,
         usuario_id: usuarioId,
-        monto_cierre: parseFloat(monto),
+        monto_cierre: parseFloat(montoCierre),
         observaciones: "Cierre manual",
       });
       setSuccessMsg("Caja cerrada correctamente");
+      setShowModalCerrar(false);
+      setMontoCierre("");
       await cargarCaja();
       await cargarHistorialCajas(1);
     } catch (err) {
@@ -346,7 +360,7 @@ const CajaDashboard = () => {
               <Button
                 variant="danger"
                 className="ms-2"
-                onClick={handleCerrarCaja}
+                onClick={() => setShowModalCerrar(true)}
               >
                 Cerrar Caja
               </Button>
@@ -448,7 +462,11 @@ const CajaDashboard = () => {
                           : "-"}
                       </td>
                       <td>{formatCurrency(c.monto_apertura)}</td>
-                      <td>{c.monto_cierre ? formatCurrency(c.monto_cierre) : "-"}</td>
+                      <td>
+                        {c.monto_cierre
+                          ? formatCurrency(c.monto_cierre)
+                          : "-"}
+                      </td>
                       <td>{c.usuario_apertura}</td>
                       <td>{c.usuario_cierre || "-"}</td>
                       <td>
@@ -479,7 +497,11 @@ const CajaDashboard = () => {
                             <tbody>
                               {movimientosPorCaja[c.id].map((mov) => (
                                 <tr key={mov.id}>
-                                  <td>{new Date(mov.fecha_movimiento).toLocaleString()}</td>
+                                  <td>
+                                    {new Date(
+                                      mov.fecha_movimiento
+                                    ).toLocaleString()}
+                                  </td>
                                   <td>{mov.tipo_movimiento}</td>
                                   <td
                                     style={{
@@ -515,6 +537,32 @@ const CajaDashboard = () => {
           </div>
         </>
       )}
+
+      {/* Modal elegante de cierre */}
+      <Modal show={showModalCerrar} onHide={() => setShowModalCerrar(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Cerrar Caja</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Monto de Cierre</Form.Label>
+            <Form.Control
+              type="number"
+              placeholder="Ingrese el monto de cierre"
+              value={montoCierre}
+              onChange={(e) => setMontoCierre(e.target.value)}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModalCerrar(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={handleCerrarCaja}>
+            Confirmar Cierre
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
