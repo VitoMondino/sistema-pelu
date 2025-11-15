@@ -28,18 +28,11 @@ const ProveedoresPage = () => {
     setError(null);
     try {
       const response = await fetchProveedores();
-      console.log('Respuesta completa:', response); // Debug
-      console.log('Response.data:', response.data); // Debug
-      
-      // Manejar diferentes estructuras de respuesta
       const data = response.data?.data || response.data || [];
-      console.log('Datos finales:', data); // Debug
-      
       setProveedores(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error al cargar proveedores:', error);
       setError('Error al cargar los proveedores. Por favor, intenta nuevamente.');
-      setProveedores([]); // Asegurar que siempre sea un array
+      setProveedores([]);
     } finally {
       setLoading(false);
     }
@@ -79,7 +72,6 @@ const ProveedoresPage = () => {
       setProveedorAEliminar(null);
       await cargarProveedores();
     } catch (error) {
-      console.error('Error al eliminar proveedor:', error);
       alert('Error al eliminar el proveedor. Puede que tenga registros asociados.');
     }
   };
@@ -89,7 +81,6 @@ const ProveedoresPage = () => {
       await toggleProveedorActivo(id);
       await cargarProveedores();
     } catch (error) {
-      console.error('Error al cambiar estado del proveedor:', error);
       alert('Error al cambiar el estado del proveedor');
     }
   };

@@ -33,103 +33,19 @@ const LoginPage = () => {
         }
     };
 
-    // 🎨 Estilos en JS
-    const styles = {
-        container: {
-            background: 'url("https://images.unsplash.com/photo-1578682129703-2f9628cb5978?fit=crop&w=1600&q=80") center center / cover no-repeat',
-            minHeight: '100vh',
-            padding: '2rem',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        overlay: {
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(245,245,245,0.7)',
-            zIndex: 0,
-        },
-        card: {
-            position: 'relative',
-            zIndex: 1,
-            border: 'none',
-            borderRadius: '1.5rem',
-            padding: '2rem',
-            background: 'rgba(255, 255, 255, 0.85)',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.08)',
-            backdropFilter: 'blur(8px)',
-            maxWidth: '400px',
-            width: '100%',
-            textAlign: 'center',
-        },
-        logo: {
-            content: '"MV"',
-            fontFamily: '"Playfair Display", serif',
-            position: 'absolute',
-            top: '-45px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#d8a863',
-            color: 'white',
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(216,168,99,0.3)',
-        },
-        button: {
-            background: 'linear-gradient(90deg, #e2b673, #d8a863)',
-            border: 'none',
-            padding: '0.8rem',
-            borderRadius: '2rem',
-            fontWeight: 'bold',
-            color: '#fff',
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase',
-            transition: 'all 0.3s ease',
-            width: '100%',
-        },
-        formControl: {
-            borderRadius: '2rem',
-            padding: '0.8rem 1rem',
-            border: '1px solid #ddd',
-            background: '#fdfdfd',
-        },
-        h2: {
-            fontFamily: '"Playfair Display", serif',
-            color: '#333',
-            fontSize: '1.8rem',
-            marginTop: '2.5rem',
-            marginBottom: '0.25rem',
-        },
-        h3: {
-            fontFamily: '"Lato", sans-serif',
-            color: '#666',
-            fontSize: '1.1rem',
-            marginBottom: '2rem',
-            letterSpacing: '0.5px',
-        }
-    };
-
     return (
-        <div style={styles.container}>
-            <div style={styles.overlay}></div>
-            <Card style={styles.card}>
-                <div style={styles.logo}>MV</div>
+        <div className="login-page">
+            <div className="login-overlay"></div>
+            <Card className="login-card fade-in">
+                <div className="login-logo">MV</div>
                 <Card.Body>
-                    <h2 style={styles.h2}>MV Salon Urbano</h2>
-                    <h3 style={styles.h3}>Iniciar Sesión</h3>
-                    {error && <Alert variant="danger">{error}</Alert>}
+                    <h2 className="login-title">MV Salon Urbano</h2>
+                    <p className="login-subtitle">Iniciar Sesión</p>
+                    {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
                     <Form onSubmit={handleSubmit}>
                         <Form.Group className="mb-3" controlId="formBasicEmail">
-                            <Form.Label>Usuario</Form.Label>
+                            <Form.Label className="form-label">Usuario</Form.Label>
                             <Form.Control
-                                style={styles.formControl}
                                 type="text"
                                 placeholder="Ingrese su usuario"
                                 value={nombre_usuario}
@@ -138,10 +54,9 @@ const LoginPage = () => {
                             />
                         </Form.Group>
 
-                        <Form.Group className="mb-3" controlId="formBasicPassword">
-                            <Form.Label>Contraseña</Form.Label>
+                        <Form.Group className="mb-4" controlId="formBasicPassword">
+                            <Form.Label className="form-label">Contraseña</Form.Label>
                             <Form.Control
-                                style={styles.formControl}
                                 type="password"
                                 placeholder="Contraseña"
                                 value={contrasena}
@@ -153,9 +68,14 @@ const LoginPage = () => {
                             <Button
                                 type="submit"
                                 disabled={loading}
-                                style={styles.button}
+                                className="btn btn-primary btn-lg"
                             >
-                                {loading ? 'Ingresando...' : 'Ingresar'}
+                                {loading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Ingresando...
+                                    </>
+                                ) : 'Ingresar'}
                             </Button>
                         </div>
                     </Form>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Tabs, Tab, Table, Alert, Spinner, Card } from 'react-bootstrap';
+//import './GlobalStyles.css';
 import { fetchClienteById, fetchHistorialServiciosByClienteId } from '../../api';
 
 const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {

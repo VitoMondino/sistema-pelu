@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap';
+//import './GlobalStyles.css';
 import { createCliente, updateCliente } from '../../api';
 
 const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
