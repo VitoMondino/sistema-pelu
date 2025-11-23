@@ -68,11 +68,59 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
         }
     }, [activeTab, clienteId, cliente]);
 
-    // 🔸 Funciones auxiliares
+    // 🔸 Función para formatear fecha SIN usar Date() - solo manipulación de strings
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+        
+        console.log('=== formatDate DetailModal ===');
+        console.log('Input:', dateString, 'Tipo:', typeof dateString);
+        
+        try {
+            const dateStr = String(dateString);
+            
+            // Si viene en formato YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                const [year, month, day] = dateStr.split('-');
+                
+                // Mapeo de meses en español
+                const meses = [
+                    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                ];
+                
+                const mesNombre = meses[parseInt(month, 10) - 1];
+                
+                // Formato: "05 de marzo de 2001"
+                return `${parseInt(day, 10)} de ${mesNombre} de ${year}`;
+            }
+            
+            // Si tiene la T de ISO, extraer solo la parte de la fecha
+            if (dateStr.includes('T')) {
+                const [year, month, day] = dateStr.split('T')[0].split('-');
+                const meses = [
+                    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                ];
+                const mesNombre = meses[parseInt(month, 10) - 1];
+                return `${parseInt(day, 10)} de ${mesNombre} de ${year}`;
+            }
+            
+            // Si tiene espacio (datetime)
+            if (dateStr.includes(' ')) {
+                const [year, month, day] = dateStr.split(' ')[0].split('-');
+                const meses = [
+                    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                ];
+                const mesNombre = meses[parseInt(month, 10) - 1];
+                return `${parseInt(day, 10)} de ${mesNombre} de ${year}`;
+            }
+            
+            return dateStr;
+        } catch (e) {
+            console.error('Error al formatear fecha:', e);
+            return dateString;
+        }
     };
 
     const formatDateTime = (dateTimeString) => {
@@ -129,7 +177,7 @@ const ClienteDetailModal = ({ show, onHide, clienteId, onEditCliente }) => {
                                 <Card.Body>
                                     <p><strong>Nombre Completo:</strong> {cliente.nombre} {cliente.apellido}</p>
                                     <p><strong>Teléfono:</strong> {cliente.telefono}</p>
-                                    <p><strong>Fecha de Cumpleaños:</strong> {formatDate(cliente.fecha_cumpleanos) || 'No registrada'}</p>
+                                    <p><strong>Fecha de Cumpleaños:</strong> {formatDate(cliente.fecha_cumpleanos)}</p>
                                     <p><strong>Notas:</strong></p>
                                     <pre style={{
                                         whiteSpace: 'pre-wrap',

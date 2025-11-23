@@ -14,51 +14,47 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Función para formatear fecha evitando problemas de zona horaria
+    // Función para formatear fecha - SIMPLIFICADA para evitar conversiones
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
         
-        // Si la fecha ya está en formato YYYY-MM-DD, la devolvemos tal como está
-        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            return dateString;
+        // Convertir a string si no lo es
+        const dateStr = String(dateString);
+        
+        // Si ya está en formato YYYY-MM-DD, devolverlo tal cual
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            return dateStr;
         }
         
-        // Si es una fecha ISO o con hora, extraemos solo la parte de la fecha
-        if (typeof dateString === 'string' && dateString.includes('T')) {
-            return dateString.split('T')[0];
+        // Si tiene la T de ISO, extraer solo la parte de la fecha
+        if (dateStr.includes('T')) {
+            return dateStr.split('T')[0];
         }
         
-        // Si es un objeto Date o string de fecha, lo convertimos cuidadosamente
-        try {
-            const date = new Date(dateString);
-            // Verificamos que la fecha sea válida
-            if (isNaN(date.getTime())) {
-                return '';
-            }
-            
-            // Usamos los métodos locales para evitar problemas de zona horaria
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            
-            return `${year}-${month}-${day}`;
-        } catch (e) {
-            console.error('Error al formatear fecha:', e);
-            return '';
+        // Si tiene espacio (datetime), extraer solo la parte de la fecha
+        if (dateStr.includes(' ')) {
+            return dateStr.split(' ')[0];
         }
+        
+        return '';
     };
 
     useEffect(() => {
         if (clienteToEdit) {
+            const fechaParaInput = formatDateForInput(clienteToEdit.fecha_cumpleanos);
+            
+            console.log('=== DEBUG ClienteForm ===');
+            console.log('Fecha recibida:', clienteToEdit.fecha_cumpleanos);
+            console.log('Fecha para input:', fechaParaInput);
+            
             setFormData({
                 nombre: clienteToEdit.nombre || '',
                 apellido: clienteToEdit.apellido || '',
                 telefono: clienteToEdit.telefono || '',
-                fecha_cumpleanos: formatDateForInput(clienteToEdit.fecha_cumpleanos),
+                fecha_cumpleanos: fechaParaInput,
                 notas: clienteToEdit.notas || ''
             });
         } else {
-            // Reset form if no client is being edited
             setFormData({ 
                 nombre: '', 
                 apellido: '', 
@@ -100,6 +96,9 @@ const ClienteForm = ({ clienteToEdit, onFormSubmit, onCancel }) => {
             if (!dataToSend.fecha_cumpleanos || dataToSend.fecha_cumpleanos.trim() === '') {
                 dataToSend.fecha_cumpleanos = null;
             }
+
+            console.log('=== DEBUG Submit ===');
+            console.log('Fecha a enviar:', dataToSend.fecha_cumpleanos);
 
             if (clienteToEdit && clienteToEdit.id) {
                 response = await updateCliente(clienteToEdit.id, dataToSend);

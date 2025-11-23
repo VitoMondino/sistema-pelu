@@ -1,5 +1,25 @@
 const db = require('../db');
 
+// Función auxiliar para formatear fechas sin problemas de zona horaria
+function formatearFechaSoloFecha(fecha) {
+  if (!fecha) return null;
+  
+  // Si ya es una cadena en formato YYYY-MM-DD, devolverla tal cual
+  if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return fecha;
+  }
+  
+  // Si es un objeto Date o timestamp
+  if (fecha instanceof Date) {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  return null;
+}
+
 // Obtener todos los clientes
 async function getAllClientes(req, res, next) {
   try {
@@ -9,15 +29,21 @@ async function getAllClientes(req, res, next) {
         nombre, 
         apellido, 
         telefono, 
-        DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, 
+        fecha_cumpleanos, 
         notas 
       FROM clientes
     `);
 
+    // Formatear las fechas manualmente para evitar problemas de zona horaria
+    const clientesFormateados = rows.map(cliente => ({
+      ...cliente,
+      fecha_cumpleanos: formatearFechaSoloFecha(cliente.fecha_cumpleanos)
+    }));
+
     res.json({
       success: true,
       data: {
-        clientes: rows
+        clientes: clientesFormateados
       }
     });
   } catch (error) {
@@ -30,7 +56,7 @@ async function getClienteById(req, res, next) {
   const { id } = req.params;
   try {
     const rows = await db.query(`
-      SELECT id, nombre, apellido, telefono, DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos, notas 
+      SELECT id, nombre, apellido, telefono, fecha_cumpleanos, notas 
       FROM clientes 
       WHERE id = ?
     `, [id]);
@@ -39,7 +65,12 @@ async function getClienteById(req, res, next) {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
 
-    res.json(rows[0]);
+    const cliente = {
+      ...rows[0],
+      fecha_cumpleanos: formatearFechaSoloFecha(rows[0].fecha_cumpleanos)
+    };
+
+    res.json(cliente);
   } catch (error) {
     next(error);
   }
@@ -184,7 +215,7 @@ async function getProximosCumpleanos(req, res, next) {
     const query = `
       SELECT 
         id, nombre, apellido, telefono, 
-        DATE_FORMAT(fecha_cumpleanos, "%Y-%m-%d") as fecha_cumpleanos
+        fecha_cumpleanos
       FROM clientes 
       WHERE fecha_cumpleanos IS NOT NULL
       ORDER BY nombre, apellido
@@ -199,7 +230,10 @@ async function getProximosCumpleanos(req, res, next) {
     const fechaLimite = new Date(hoy);
     fechaLimite.setUTCDate(hoy.getUTCDate() + diasAdelanto);
 
-    const clientesFiltrados = todosLosClientes.filter(cliente => {
+    const clientesFiltrados = todosLosClientes.map(cliente => ({
+      ...cliente,
+      fecha_cumpleanos: formatearFechaSoloFecha(cliente.fecha_cumpleanos)
+    })).filter(cliente => {
       if (!cliente.fecha_cumpleanos) return false;
 
       const [year, month, day] = cliente.fecha_cumpleanos.split('-').map(Number);

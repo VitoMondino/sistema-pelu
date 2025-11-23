@@ -93,21 +93,13 @@ const ClientesPage = () => {
     };
 
     const handleShowFormToEdit = (cliente) => {
-        const formatDateForEdit = (dateString) => {
-            if (!dateString) return '';
-            if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-                return dateString;
-            }
-            if (typeof dateString === 'string' && dateString.includes('T')) {
-                return dateString.split('T')[0];
-            }
-            return '';
-        };
-
+        // Asegurarnos de que la fecha se mantenga en formato YYYY-MM-DD
         const clienteParaEditar = {
             ...cliente,
-            fecha_cumpleanos: formatDateForEdit(cliente.fecha_cumpleanos)
+            fecha_cumpleanos: cliente.fecha_cumpleanos || ''
         };
+
+        console.log('Cliente a editar:', clienteParaEditar); // Debug
 
         setClienteToEdit(clienteParaEditar);
         setError('');

@@ -41,12 +41,38 @@ const ClienteList = memo(
       return <Alert variant="info">No hay clientes para mostrar.</Alert>;
     }
 
+    // Función para formatear fecha SIN usar Date() - solo manipulación de strings
     const formatDate = (dateString) => {
       if (!dateString) return "N/A";
+      
+      console.log('=== formatDate ClienteList ===');
+      console.log('Input:', dateString, 'Tipo:', typeof dateString);
+      
       try {
-        const d = new Date(dateString);
-        return d.toLocaleDateString("es-ES");
-      } catch {
+        const dateStr = String(dateString);
+        
+        // Si viene en formato YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          const [year, month, day] = dateStr.split('-');
+          // Formato dd/mm/yyyy
+          return `${day}/${month}/${year}`;
+        }
+        
+        // Si tiene la T de ISO, extraer solo la parte de la fecha
+        if (dateStr.includes('T')) {
+          const [year, month, day] = dateStr.split('T')[0].split('-');
+          return `${day}/${month}/${year}`;
+        }
+        
+        // Si tiene espacio (datetime)
+        if (dateStr.includes(' ')) {
+          const [year, month, day] = dateStr.split(' ')[0].split('-');
+          return `${day}/${month}/${year}`;
+        }
+        
+        return dateStr;
+      } catch (e) {
+        console.error('Error al formatear fecha:', e);
         return dateString;
       }
     };
