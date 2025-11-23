@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Form, Button, Card, Alert } from 'react-bootstrap';
+import './MenusStyles/Login.css';
 
 const LoginPage = () => {
-    const [nombre_usuario, setNombreUsuario] = useState('MVsalonUrbano');
-    const [contrasena, setContrasena] = useState('Tunumero200105+');
+    const [nombre_usuario, setNombreUsuario] = useState('');
+    const [contrasena, setContrasena] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login, isAuthenticated } = useAuth();
@@ -37,10 +38,10 @@ const LoginPage = () => {
         <div className="login-page">
             <div className="login-overlay"></div>
             <Card className="login-card fade-in">
-                <div className="login-logo">MV</div>
+                <div className="login-logo">M.V</div>
                 <Card.Body>
-                    <h2 className="login-title">MV Salon Urbano</h2>
-                    <p className="login-subtitle">Iniciar Sesión</p>
+                    <h2 className="login-title">¡Bienvenido!</h2>
+                    <p className="login-subtitle">Inicie Sesión</p>
                     {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
                     <Form onSubmit={handleSubmit}>
                         <Form.Group className="mb-3" controlId="formBasicEmail">

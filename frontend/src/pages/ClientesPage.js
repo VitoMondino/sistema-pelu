@@ -13,6 +13,7 @@ import {
   resetAsistencia
 } from '../api';
 import { PlusCircleFill, Search } from 'react-bootstrap-icons';
+import './MenusStyles/ClientesPage.css';
 
 const ClientesPage = () => {
     const [clientes, setClientes] = useState([]);

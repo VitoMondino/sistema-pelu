@@ -10,8 +10,7 @@ import StockPage from './pages/StockPage';
 import CajaPage from './pages/CajaPage';
 import MovimientosPage from './pages/StockMovimientosPage';
 import ProveedoresPage from './pages/ProveedoresPage';
-import './pages/GlobalStyles.css';
-
+import './pages/MenusStyles/Login.css'
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
