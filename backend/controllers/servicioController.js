@@ -3,7 +3,13 @@ const db = require('../db');
 // Obtener todos los servicios
 async function getAllServicios(req, res, next) {
   try {
-    const rows = await db.query('SELECT id, nombre_servicio, precio FROM servicios');
+    const activeOnly = req.query.active === 'true' || req.query.active === '1';
+    let rows;
+    if (activeOnly) {
+      rows = await db.query('SELECT id, nombre_servicio, precio, activo FROM servicios WHERE activo = 1');
+    } else {
+      rows = await db.query('SELECT id, nombre_servicio, precio, activo FROM servicios');
+    }
     res.json(rows);
   } catch (error) {
     next(error);
@@ -97,10 +103,25 @@ async function deleteServicio(req, res, next) {
   }
 }
 
+// Alternar activo/inactivo
+async function toggleActivo(req, res, next) {
+  const { id } = req.params;
+  try {
+    const result = await db.query('UPDATE servicios SET activo = NOT activo WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Servicio no encontrado' });
+    }
+    res.json({ message: 'Estado del servicio actualizado' });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getAllServicios,
   getServicioById,
   createServicio,
   updateServicio,
   deleteServicio,
+  toggleActivo,
 };

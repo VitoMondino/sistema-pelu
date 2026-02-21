@@ -23,16 +23,31 @@ function formatearFechaSoloFecha(fecha) {
 // Obtener todos los clientes
 async function getAllClientes(req, res, next) {
   try {
-    const rows = await db.query(`
-      SELECT 
-        id, 
-        nombre, 
-        apellido, 
-        telefono, 
-        fecha_cumpleanos, 
-        notas 
-      FROM clientes
-    `);
+    const q = (req.query.q || '').trim();
+
+    let rows;
+    if (q) {
+      const like = `%${q}%`;
+      rows = await db.query(`
+        SELECT id, nombre, apellido, telefono, fecha_cumpleanos, notas
+        FROM clientes
+        WHERE nombre LIKE ? OR apellido LIKE ?
+        ORDER BY nombre, apellido
+        LIMIT 50
+      `, [like, like]);
+    } else {
+      rows = await db.query(`
+        SELECT 
+          id, 
+          nombre, 
+          apellido, 
+          telefono, 
+          fecha_cumpleanos, 
+          notas 
+        FROM clientes
+        ORDER BY nombre, apellido
+      `);
+    }
 
     // Formatear las fechas manualmente para evitar problemas de zona horaria
     const clientesFormateados = rows.map(cliente => ({

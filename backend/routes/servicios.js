@@ -21,4 +21,7 @@ router.put('/:id', servicioController.updateServicio);
 // DELETE /api/servicios/:id - Eliminar un servicio
 router.delete('/:id', servicioController.deleteServicio);
 
+// PATCH /api/servicios/:id/toggle-activo - Alternar activo/inactivo
+router.patch('/:id/toggle-activo', servicioController.toggleActivo);
+
 module.exports = router;

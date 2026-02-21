@@ -2,7 +2,7 @@ module.exports = {
   db: {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root', 
-    password: process.env.DB_PASSWORD || 'Tunumero200105', 
+    password: process.env.DB_PASSWORD || 'Tunumero200105',
     database: process.env.DB_NAME || 'peluqueria_db',
     // CONFIGURACIONES CRÍTICAS PARA FECHAS 
     timezone: '+00:00',      // Fuerza MySQL a trabajar en UTC

@@ -41,7 +41,7 @@ export default apiClient;
 export const login = (credentials) => apiClient.post('/auth/login', credentials);
 
 // Clientes
-export const fetchClientes = () => apiClient.get('/clientes');
+export const fetchClientes = (query) => apiClient.get('/clientes', { params: query ? { q: query } : {} });
 export const fetchClienteById = (id) => apiClient.get(`/clientes/${id}`);
 export const fetchHistorialServiciosByClienteId = (clienteId) => apiClient.get(`/clientes/${clienteId}/historial-servicios`);
 export const createCliente = (clienteData) => apiClient.post('/clientes', clienteData);
@@ -50,7 +50,8 @@ export const deleteCliente = (id) => apiClient.delete(`/clientes/${id}`);
 export const fetchProximosCumpleanos = (dias = 7) => apiClient.get(`/clientes/proximos-cumpleanos?dias=${dias}`);
 
 // Servicios
-export const fetchServicios = () => apiClient.get('/servicios');
+export const fetchServicios = (query) => apiClient.get('/servicios', { params: query || {} });
+export const toggleServicioActivo = (id) => apiClient.patch(`/servicios/${id}/toggle-activo`);
 export const fetchServicioById = (id) => apiClient.get(`/servicios/${id}`);
 export const createServicio = (servicioData) => apiClient.post('/servicios', servicioData);
 export const updateServicio = (id, servicioData) => apiClient.put(`/servicios/${id}`, servicioData);
@@ -100,3 +101,8 @@ export const createProveedor = (data) => apiClient.post('/proveedores', data);
 export const updateProveedor = (id, data) => apiClient.put(`/proveedores/${id}`, data);
 export const deleteProveedor = (id) => apiClient.delete(`/proveedores/${id}`);
 export const toggleProveedorActivo = (id) => apiClient.patch(`/proveedores/${id}/toggle-activo`);
+// Compras a proveedores (historial estructurado)
+export const fetchProveedorCompras = (proveedorId) => apiClient.get(`/proveedores/${proveedorId}/compras`);
+export const createProveedorCompra = (proveedorId, compraData) => apiClient.post(`/proveedores/${proveedorId}/compras`, compraData);
+export const updateProveedorCompra = (compraId, compraData) => apiClient.put(`/proveedores/compras/${compraId}`, compraData);
+export const deleteProveedorCompra = (compraId) => apiClient.delete(`/proveedores/compras/${compraId}`);

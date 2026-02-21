@@ -4,6 +4,7 @@ import { Plus } from 'react-bootstrap-icons';
 import MainLayout from '../components/MainLayout';
 import ProveedorList from '../components/proveedores/ProveedorList';
 import ProveedorForm from '../components/proveedores/ProveedorForm';
+import ProveedorComprasModal from '../components/proveedores/ProveedorComprasModal';
 import { 
   fetchProveedores, 
   deleteProveedor, 
@@ -15,6 +16,8 @@ const ProveedoresPage = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
+  const [showComprasModal, setShowComprasModal] = useState(false);
+  const [proveedorParaCompras, setProveedorParaCompras] = useState(null);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [proveedorAEliminar, setProveedorAEliminar] = useState(null);
@@ -113,6 +116,7 @@ const ProveedoresPage = () => {
               onEdit={handleEditarProveedor}
               onDelete={handleEliminarProveedor}
               onToggleActivo={handleToggleActivo}
+              onViewCompras={(p) => { setProveedorParaCompras(p); setShowComprasModal(true); }}
               loading={loading}
             />
           </Card.Body>
@@ -133,6 +137,15 @@ const ProveedoresPage = () => {
             />
           </Modal.Body>
         </Modal>
+
+        {/* Modal para ver historial de compras */}
+        {proveedorParaCompras && (
+          <ProveedorComprasModal
+            show={showComprasModal}
+            onHide={() => { setShowComprasModal(false); setProveedorParaCompras(null); }}
+            proveedor={proveedorParaCompras}
+          />
+        )}
 
         {/* Modal de confirmación para eliminar */}
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>

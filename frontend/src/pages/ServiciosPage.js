@@ -12,7 +12,7 @@ import {
 import ServicioList from '../components/servicios/ServicioList';
 import ServicioForm from '../components/servicios/ServicioForm';
 import ConfirmModal from '../components/ConfirmModal';
-import { fetchServicios, deleteServicio as apiDeleteServicio } from '../api';
+import { fetchServicios, deleteServicio as apiDeleteServicio, toggleServicioActivo } from '../api';
 import { PlusCircleFill } from 'react-bootstrap-icons';
 
 const ServiciosPage = () => {
@@ -81,6 +81,15 @@ const ServiciosPage = () => {
     }
   };
 
+  const handleToggleActivo = async (id) => {
+    try {
+      await toggleServicioActivo(id);
+      await cargarServicios();
+    } catch (err) {
+      setError('No se pudo cambiar el estado del servicio');
+    }
+  };
+
   // 🎨 Estilos
   const styles = {
     container: {
@@ -143,6 +152,7 @@ const ServiciosPage = () => {
               servicios={servicios}
               onEdit={handleShowFormToEdit}
               onDelete={handleOpenConfirmDelete}
+              onToggleActivo={handleToggleActivo}
               loading={loading}
               error={error && servicios.length === 0 ? error : null}
             />

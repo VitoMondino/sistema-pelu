@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Alert, Row, Col, Spinner } from 'react-bootstrap';
-import { createTurno, updateTurno, fetchClientes, fetchServicios } from '../../api';
+import { createTurno, updateTurno, fetchClientes, fetchClienteById, fetchServicios } from '../../api';
 
 const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -11,6 +11,8 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
   });
   const [clientes, setClientes] = useState([]);
   const [servicios, setServicios] = useState([]);
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientesLoading, setClientesLoading] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingDependencies, setLoadingDependencies] = useState(true);
@@ -19,17 +21,27 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
     const cargarDependencias = async () => {
       setLoadingDependencies(true);
       try {
-        const [clientesRes, serviciosRes] = await Promise.all([
-          fetchClientes(),
-          fetchServicios(),
-        ]);
-        setClientes(
-          Array.isArray(clientesRes.data?.data?.clientes)
-            ? clientesRes.data.data.clientes
-            : []
-        );
+        const serviciosRes = await fetchServicios({ active: true });
+        // Si estamos editando y el turno ya tiene cliente, traemos solo ese cliente para mostrar su nombre
+        if (turnoToEdit && turnoToEdit.cliente_id) {
+          try {
+            const clienteRes = await fetchClienteById(turnoToEdit.cliente_id);
+            // backend retorna el objeto cliente en data
+            const clienteObj = clienteRes.data;
+            if (clienteObj && clienteObj.id) {
+              setClientes([clienteObj]);
+            } else {
+              setClientes([]);
+            }
+          } catch (err) {
+            console.error('No se pudo cargar el cliente del turno:', err);
+            setClientes([]);
+          }
+        } else {
+          setClientes([]); // vaciar lista hasta que el usuario busque
+        }
         setServicios(
-          Array.isArray(serviciosRes.data) ? serviciosRes.data : []
+          Array.isArray(serviciosRes.data) ? serviciosRes.data : (serviciosRes.data?.data || [])
         );
       } catch (err) {
         console.error('Error al cargar clientes o servicios:', err);
@@ -42,6 +54,38 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
     };
     cargarDependencias();
   }, []);
+
+  // Debounce búsqueda de clientes: solo buscar si hay al menos 3 caracteres
+  useEffect(() => {
+    const term = (clientSearch || '').trim();
+    if (term.length < 3) {
+      // si se está editando, mantener el cliente ya cargado; si no, limpiar
+      if (!turnoToEdit) setClientes([]);
+      setClientesLoading(false);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setClientesLoading(true);
+      try {
+        const res = await fetchClientes(term);
+        // normalizar distintas formas de respuesta
+        const dataArray = Array.isArray(res.data?.data?.clientes)
+          ? res.data.data.clientes
+          : Array.isArray(res.data)
+          ? res.data
+          : res.data?.clientes || [];
+        setClientes(dataArray);
+      } catch (err) {
+        console.error('Error buscando clientes:', err);
+        setClientes([]);
+      } finally {
+        setClientesLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [clientSearch, turnoToEdit]);
 
   useEffect(() => {
     if (turnoToEdit) {
@@ -129,11 +173,30 @@ const TurnoForm = ({ turnoToEdit, onFormSubmit, onCancel }) => {
             <Form.Label>
               Cliente <span className="text-danger">*</span>
             </Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Escriba al menos 3 letras para buscar..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              size="sm"
+            />
+            <div className="mt-2">
+              {clientesLoading && (
+                <div className="text-muted">Buscando clientes... <Spinner animation="border" size="sm" /></div>
+              )}
+              {!clientesLoading && clientes.length === 0 && (
+                <div className="text-muted">Escriba 3 caracteres para buscar clientes.</div>
+              )}
+            </div>
+
             <Form.Select
               name="cliente_id"
               value={formData.cliente_id}
               onChange={handleChange}
               required
+              className="mt-2"
+              disabled={clientes.length === 0}
+              size="sm"
             >
               <option value="">Seleccione un cliente</option>
               {clientes.map((c) => (

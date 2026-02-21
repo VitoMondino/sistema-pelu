@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, Badge, Button, Spinner } from 'react-bootstrap';
 import { PencilSquare, Trash, ToggleOff, ToggleOn } from 'react-bootstrap-icons';
 
-const ProveedorList = ({ proveedores, onEdit, onDelete, onToggleActivo, loading }) => {
+const ProveedorList = ({ proveedores, onEdit, onDelete, onToggleActivo, onViewCompras, loading }) => {
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -74,6 +74,14 @@ const ProveedorList = ({ proveedores, onEdit, onDelete, onToggleActivo, loading 
                     title="Editar"
                   >
                     <PencilSquare />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => onViewCompras && onViewCompras(proveedor)}
+                    title="Ver Compras"
+                  >
+                    📦
                   </Button>
                   <Button
                     variant="danger"

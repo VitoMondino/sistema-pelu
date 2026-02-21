@@ -5,7 +5,8 @@ import {
   registrarMovimientoCaja,
   obtenerCajaActual,
   obtenerHistorialCajas,
-  obtenerClientes,
+  fetchClientes,
+  fetchClienteById,
 } from "../../api";
 import {
   Button,
@@ -17,6 +18,9 @@ import {
   Badge,
   Spinner,
   Modal,
+  InputGroup,
+  Toast,
+  ToastContainer,
 } from "react-bootstrap";
 
 const CajaDashboard = () => {
@@ -29,6 +33,8 @@ const CajaDashboard = () => {
   const [tipoMovimiento, setTipoMovimiento] = useState("cobro_cliente");
   const [clientes, setClientes] = useState([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientesLoading, setClientesLoading] = useState(false);
   const [metodoPago, setMetodoPago] = useState("efectivo");
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -105,6 +111,8 @@ const CajaDashboard = () => {
         observaciones: "Apertura diaria",
       });
       setSuccessMsg("Caja abierta correctamente");
+      // auto-hide success message
+      setTimeout(() => setSuccessMsg(null), 4000);
       setMontoApertura("");
       await cargarCaja();
       await cargarHistorialCajas();
@@ -147,6 +155,7 @@ const CajaDashboard = () => {
       await registrarMovimientoCaja(payload);
 
       setSuccessMsg("Movimiento registrado");
+      setTimeout(() => setSuccessMsg(null), 4000);
       setDescripcion("");
       setMontoMovimiento("");
       setClienteSeleccionado("");
@@ -172,6 +181,7 @@ const CajaDashboard = () => {
         observaciones: "Cierre manual",
       });
       setSuccessMsg("Caja cerrada correctamente");
+      setTimeout(() => setSuccessMsg(null), 4000);
       setShowModalCerrar(false);
       setMontoCierre("");
       await cargarCaja();
@@ -186,6 +196,23 @@ const CajaDashboard = () => {
       style: "currency",
       currency: "ARS",
     }).format(amount);
+
+  const tipoLabels = {
+    cobro_cliente: 'Cobro a Cliente',
+    compra_proveedor: 'Compra a Proveedor',
+    ajuste_positivo: 'Ajuste Positivo',
+    ajuste_negativo: 'Ajuste Negativo',
+    retiro: 'Retiro',
+  };
+
+  // Validaciones UI
+  const canOpenCaja = () => montoApertura && !isNaN(montoApertura) && parseFloat(montoApertura) > 0;
+  const canRegisterMovimiento = () => {
+    if (!montoMovimiento || isNaN(montoMovimiento) || parseFloat(montoMovimiento) <= 0) return false;
+    if (!descripcion.trim()) return false;
+    if (tipoMovimiento === 'cobro_cliente' && !clienteSeleccionado) return false;
+    return true;
+  };
 
   const renderPaginacionHistorial = () => {
     if (totalPagesHistorial <= 1) return null;
@@ -231,12 +258,45 @@ const CajaDashboard = () => {
 
   useEffect(() => {
     if (tipoMovimiento === "cobro_cliente") {
-      cargarClientes();
+      // habilitar búsqueda por nombre; no traer todos los clientes
+      setClientes([]);
+      setClienteSeleccionado("");
+      setClientSearch("");
     } else {
       setClientes([]);
       setClienteSeleccionado("");
     }
   }, [tipoMovimiento]);
+
+  // Debounce búsqueda de clientes: solo buscar si hay al menos 3 caracteres
+  useEffect(() => {
+    const term = (clientSearch || "").trim();
+    if (term.length < 3) {
+      setClientes([]);
+      setClientesLoading(false);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setClientesLoading(true);
+      try {
+        const res = await fetchClientes(term);
+        const dataArray = Array.isArray(res.data?.data?.clientes)
+          ? res.data.data.clientes
+          : Array.isArray(res.data)
+          ? res.data
+          : res.data?.clientes || [];
+        setClientes(dataArray);
+      } catch (err) {
+        console.error('Error buscando clientes en caja:', err);
+        setClientes([]);
+      } finally {
+        setClientesLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [clientSearch]);
 
   return (
     <div className="container mt-4">
@@ -259,14 +319,16 @@ const CajaDashboard = () => {
 
       {!caja ? (
         <>
-          <Form.Control
-            type="number"
-            placeholder="Monto de apertura"
-            value={montoApertura}
-            onChange={(e) => setMontoApertura(e.target.value)}
-            className="mb-2"
-          />
-          <Button onClick={handleAbrirCaja}>Abrir Caja</Button>
+          <InputGroup className="mb-2">
+            <InputGroup.Text>$</InputGroup.Text>
+            <Form.Control
+              type="number"
+              placeholder="Monto de apertura"
+              value={montoApertura}
+              onChange={(e) => setMontoApertura(e.target.value)}
+            />
+          </InputGroup>
+          <Button onClick={handleAbrirCaja} disabled={!canOpenCaja()}>Abrir Caja</Button>
         </>
       ) : (
         <>
@@ -300,9 +362,27 @@ const CajaDashboard = () => {
                 <Col md={4}>
                   <Form.Group className="mb-2">
                     <Form.Label>Cliente</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Escriba al menos 3 letras para buscar..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      size="sm"
+                    />
+                    <div className="mt-2">
+                      {clientesLoading && (
+                        <div className="text-muted">Buscando clientes... <Spinner animation="border" size="sm" /></div>
+                      )}
+                      {!clientesLoading && clientes.length === 0 && (
+                        <div className="text-muted">Escriba 3 caracteres para buscar clientes.</div>
+                      )}
+                    </div>
+
                     <Form.Select
                       value={clienteSeleccionado}
                       onChange={(e) => setClienteSeleccionado(e.target.value)}
+                      className="mt-2"
+                      disabled={clientes.length === 0}
                     >
                       <option value="">-- Seleccione Cliente --</option>
                       {clientes.map((cliente) => (
@@ -318,12 +398,15 @@ const CajaDashboard = () => {
               <Col md={4}>
                 <Form.Group className="mb-2">
                   <Form.Label>Monto</Form.Label>
-                  <Form.Control
-                    type="number"
-                    placeholder="Monto"
-                    value={montoMovimiento}
-                    onChange={(e) => setMontoMovimiento(e.target.value)}
-                  />
+                  <InputGroup>
+                    <InputGroup.Text>$</InputGroup.Text>
+                    <Form.Control
+                      type="number"
+                      placeholder="Monto"
+                      value={montoMovimiento}
+                      onChange={(e) => setMontoMovimiento(e.target.value)}
+                    />
+                  </InputGroup>
                 </Form.Group>
               </Col>
 
@@ -354,7 +437,7 @@ const CajaDashboard = () => {
             </Row>
 
             <div className="mt-3">
-              <Button onClick={handleRegistrarMovimiento}>
+              <Button onClick={handleRegistrarMovimiento} disabled={!canRegisterMovimiento()}>
                 Registrar Movimiento
               </Button>
               <Button
@@ -414,15 +497,16 @@ const CajaDashboard = () => {
         </>
       )}
 
-      {/* Botón para mostrar/ocultar historial */}
-      <Button
-        variant="secondary"
-        size="sm"
-        className="mb-2"
-        onClick={() => setMostrarHistorial(!mostrarHistorial)}
-      >
-        {mostrarHistorial ? "Ocultar Historial" : "Mostrar Historial"}
-      </Button>
+      {/* Botón para mostrar/ocultar historial alineado a la derecha */}
+      <div className="d-flex justify-content-end mb-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setMostrarHistorial(!mostrarHistorial)}
+        >
+          {mostrarHistorial ? "Ocultar Historial" : "Mostrar Historial"}
+        </Button>
+      </div>
 
       {mostrarHistorial && (
         <>
@@ -546,23 +630,34 @@ const CajaDashboard = () => {
         <Modal.Body>
           <Form.Group>
             <Form.Label>Monto de Cierre</Form.Label>
-            <Form.Control
-              type="number"
-              placeholder="Ingrese el monto de cierre"
-              value={montoCierre}
-              onChange={(e) => setMontoCierre(e.target.value)}
-            />
+            <InputGroup>
+              <InputGroup.Text>$</InputGroup.Text>
+              <Form.Control
+                type="number"
+                placeholder="Ingrese el monto de cierre"
+                value={montoCierre}
+                onChange={(e) => setMontoCierre(e.target.value)}
+              />
+            </InputGroup>
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModalCerrar(false)}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={handleCerrarCaja}>
+          <Button variant="danger" onClick={handleCerrarCaja} disabled={!montoCierre || isNaN(montoCierre)}>
             Confirmar Cierre
           </Button>
         </Modal.Footer>
       </Modal>
+      <ToastContainer position="top-end" className="p-3">
+        <Toast bg="success" show={!!successMsg} onClose={() => setSuccessMsg(null)} delay={4000} autohide>
+          <Toast.Header>
+            <strong className="me-auto">Éxito</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{successMsg}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div>
   );
 };

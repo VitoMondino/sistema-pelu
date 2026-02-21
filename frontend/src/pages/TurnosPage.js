@@ -35,7 +35,7 @@ const TurnosPage = () => {
   const [toastInfo, setToastInfo] = useState({ show: false, message: '', variant: 'success' });
 
   const [filtroEstado, setFiltroEstado] = useState('');
-  const [filtroTiempo, setFiltroTiempo] = useState('');
+  const [filtroTiempo, setFiltroTiempo] = useState('semana');
 
   // 🔹 Estados para la paginación
   const [currentPage, setCurrentPage] = useState(1);
