@@ -13,4 +13,8 @@ module.exports = {
     port: process.env.PORT || 3001,
   },
   jwt_secret: process.env.JWT_SECRET || 'Tunumero200105+',
+    ssl: {
+    rejectUnauthorized: false // Permite la conexión segura de Railway
+  },
+  connectTimeout: 20000, // 20 segundos para intentar conectar
 };
