@@ -4,6 +4,7 @@ module.exports = {
     user: process.env.DB_USER || 'root', 
     password: process.env.DB_PASSWORD || 'Tunumero200105',
     database: process.env.DB_NAME || 'peluqueria_db',
+    port: process.env.DB_PORT || 3306,
     // CONFIGURACIONES CRÍTICAS PARA FECHAS 
     timezone: '+00:00',      // Fuerza MySQL a trabajar en UTC
     dateStrings: true,       // Devuelve fechas como strings, NO como objetos Date
