@@ -7,6 +7,7 @@ import {
   obtenerHistorialCajas,
   fetchClientes,
   fetchClienteById,
+  obtenerClientes,
 } from "../../api";
 import {
   Button,
