@@ -1,37 +1,37 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
-// Creamos un Pool configurado para conexiones seguras y estables
 const pool = mysql.createPool({
   ...config.db,
-  // Configuraciones críticas para Railway/Render:
+  // 1. SSL obligatorio para Railway
   ssl: {
     rejectUnauthorized: false
   },
+  // 2. Parámetros de estabilidad
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5, // Bajamos el límite para que sea más estable
   queueLimit: 0,
-  // Mantiene la conexión activa para evitar el cierre por el servidor
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  // Tiempo de espera para conectar
-  connectTimeout: 20000 
+  // 3. Tiempos de espera extendidos
+  connectTimeout: 20000,
+  acquireTimeout: 20000
 });
 
 async function query(sql, params) {
+  let connection;
   try {
-    // Usamos execute para mayor seguridad con sentencias preparadas
+    // Intentamos obtener una conexión limpia del pool
     const [results] = await pool.execute(sql, params);
     return results;
   } catch (error) {
-    // Si la conexión se pierde, el pool intentará reconectar en la próxima llamada
-    console.error('Error en la base de datos:', error);
+    console.error('Error en la base de datos:', error.message);
+    // Si la conexión se perdió, el pool intentará crear una nueva en la siguiente petición
     throw error;
   }
 }
 
-// Exportamos el pool por si necesitas usar transacciones en el futuro
 module.exports = {
   query,
-  pool 
+  pool
 };
