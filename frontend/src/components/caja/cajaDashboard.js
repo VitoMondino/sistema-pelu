@@ -6,8 +6,6 @@ import {
   obtenerCajaActual,
   obtenerHistorialCajas,
   fetchClientes,
-  fetchClienteById,
-  obtenerClientes,
 } from "../../api";
 import {
   Button,
@@ -80,20 +78,6 @@ const CajaDashboard = () => {
       );
     }
     setLoadingHistorial(false);
-  };
-
-  const cargarClientes = async () => {
-    try {
-      const res = await obtenerClientes();
-      if (res.data.success) {
-        setClientes(res.data.data.clientes || []);
-      } else {
-        setClientes([]);
-      }
-    } catch {
-      setError("Error al cargar clientes");
-      setClientes([]);
-    }
   };
 
   const handleAbrirCaja = async () => {
@@ -198,14 +182,6 @@ const CajaDashboard = () => {
       currency: "ARS",
     }).format(amount);
 
-  const tipoLabels = {
-    cobro_cliente: 'Cobro a Cliente',
-    compra_proveedor: 'Compra a Proveedor',
-    ajuste_positivo: 'Ajuste Positivo',
-    ajuste_negativo: 'Ajuste Negativo',
-    retiro: 'Retiro',
-  };
-
   // Validaciones UI
   const canOpenCaja = () => montoApertura && !isNaN(montoApertura) && parseFloat(montoApertura) > 0;
   const canRegisterMovimiento = () => {
@@ -255,6 +231,7 @@ const CajaDashboard = () => {
   useEffect(() => {
     cargarCaja();
     cargarHistorialCajas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -267,6 +244,7 @@ const CajaDashboard = () => {
       setClientes([]);
       setClienteSeleccionado("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipoMovimiento]);
 
   // Debounce búsqueda de clientes: solo buscar si hay al menos 3 caracteres
@@ -296,6 +274,7 @@ const CajaDashboard = () => {
       }
     }, 400);
 
+    // eslint-disable-next-line consistent-return
     return () => clearTimeout(handler);
   }, [clientSearch]);
 
