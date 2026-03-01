@@ -1,26 +1,33 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
-console.log('Intentando conectar a:', config.db.host, 'en puerto:', config.db.port);
+// Configuramos el origen de la conexión
+let poolConfig;
+if (config.dbUrl) {
+  // Si usamos URL (Producción), forzamos SSL
+  const separator = config.dbUrl.includes('?') ? '&' : '?';
+  poolConfig = config.dbUrl + separator + "ssl={\"rejectUnauthorized\":false}";
+} else {
+  // Si usamos objeto (Local), usamos la config de db
+  poolConfig = {
+    ...config.db,
+    waitForConnections: true,
+    connectionLimit: 5,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000
+  };
+}
 
-// Creamos el pool con toda la configuración de config.js
-const pool = mysql.createPool({
-  ...config.db,
-  waitForConnections: true,
-  connectionLimit: 5,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000
-});
+const pool = mysql.createPool(poolConfig);
 
-// Prueba de conexión inmediata al arrancar el backend
+// Verificación de salud de la conexión al arrancar
 (async () => {
     try {
         const connection = await pool.getConnection();
-        console.log('✅ CONEXIÓN EXITOSA CON RAILWAY');
+        console.log('✅ CONEXIÓN EXITOSA: El puente Render-Railway está activo.');
         connection.release();
     } catch (err) {
-        console.error('❌ ERROR CRÍTICO DE CONEXIÓN:', err.message);
+        console.error('❌ ERROR DE ENLACE:', err.message);
     }
 })();
 
@@ -29,11 +36,9 @@ async function query(sql, params) {
     const [results] = await pool.execute(sql, params);
     return results;
   } catch (error) {
-    console.error('Error en la base de datos:', error.message);
-    
-    // Si la conexión se pierde, intentamos reconectar una vez
+    console.error('Error en DB:', error.message);
     if (error.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log('Reintentando consulta por desconexión...');
+        console.log('Reintentando consulta...');
         const [results] = await pool.execute(sql, params);
         return results;
     }
@@ -41,4 +46,4 @@ async function query(sql, params) {
   }
 }
 
-module.exports = { query };
+module.exports = { query, pool };
