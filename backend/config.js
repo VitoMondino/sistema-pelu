@@ -1,19 +1,19 @@
 module.exports = {
   db: {
+    // Toma los datos de la captura de Render
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root', 
-    password: process.env.DB_PASSWORD || 'Tunumero200105',
-    database: process.env.DB_NAME || 'peluqueria_db',
-    port: Number(process.env.DB_PORT) || 3306, // Forzamos a número
-    // CONFIGURACIONES CRÍTICAS
+    password: process.env.DB_PASSWORD || 'Tunumero200105', 
+    database: process.env.DB_NAME || 'sistema-pelu', 
+    port: Number(process.env.DB_PORT) || 3306,
+    
+    // CONFIGURACIONES CRÍTICAS (Dentro de db para que funcionen)
     timezone: '+00:00',
     dateStrings: true,
-    ssl: {
-      rejectUnauthorized: false // Ahora sí está dentro de db
-    },
     connectTimeout: 20000,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000
+    
+    // SSL se activa automáticamente solo si estamos en la nube
+    ssl: process.env.DB_HOST ? { rejectUnauthorized: false } : false
   },
   server: {
     port: process.env.PORT || 3001,

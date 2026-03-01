@@ -2,16 +2,18 @@ const mysql = require('mysql2/promise');
 const config = require('./config');
 
 console.log('Intentando conectar a:', config.db.host, 'en puerto:', config.db.port);
-console.log('SSL Configurado:', !!config.db.ssl); // Debería imprimir true
 
+// Creamos el pool con toda la configuración de config.js
 const pool = mysql.createPool({
   ...config.db,
   waitForConnections: true,
   connectionLimit: 5,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
 
-// Función de prueba inmediata al arrancar
+// Prueba de conexión inmediata al arrancar el backend
 (async () => {
     try {
         const connection = await pool.getConnection();
@@ -19,7 +21,6 @@ const pool = mysql.createPool({
         connection.release();
     } catch (err) {
         console.error('❌ ERROR CRÍTICO DE CONEXIÓN:', err.message);
-        // El error "Connection lost" suele ocurrir si el SSL no se aplicó bien o el puerto es incorrecto
     }
 })();
 
@@ -30,9 +31,9 @@ async function query(sql, params) {
   } catch (error) {
     console.error('Error en la base de datos:', error.message);
     
-    // Si la conexión se pierde (común en Railway), reintentamos una vez
+    // Si la conexión se pierde, intentamos reconectar una vez
     if (error.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log('Reintentando consulta por conexión perdida...');
+        console.log('Reintentando consulta por desconexión...');
         const [results] = await pool.execute(sql, params);
         return results;
     }
@@ -40,4 +41,4 @@ async function query(sql, params) {
   }
 }
 
-module.exports = { query, pool };
+module.exports = { query };
