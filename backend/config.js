@@ -5,13 +5,9 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: Number(process.env.DB_PORT) || 3306,
-    
-    // Configuración para Red Interna de Railway
-    connectTimeout: 30000, 
-    ssl: false // DENTRO de Railway, SSL debe ser false para evitar conflictos de DNS
+    ssl: false // Mantener en false para red interna
   },
   server: {
-    port: process.env.PORT || 8080,
-  },
-  jwt_secret: process.env.JWT_SECRET || 'Tunumero200105+',
+    port: process.env.PORT || 8080
+  }
 };
