@@ -1,18 +1,24 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
-// Configuramos el origen de la conexión
+// Configuramos el origen de la conexión de forma robusta
 let poolConfig;
+
 if (config.dbUrl) {
-  // Si usamos URL (Producción), forzamos SSL
+  // Si usamos DATABASE_URL, verificamos si necesita inyección de parámetros SSL
+  const needsSsl = config.dbUrl.includes('proxy.rlwy.net');
   const separator = config.dbUrl.includes('?') ? '&' : '?';
-  poolConfig = config.dbUrl + separator + "ssl={\"rejectUnauthorized\":false}";
+  
+  poolConfig = needsSsl 
+    ? config.dbUrl + separator + "ssl={\"rejectUnauthorized\":false}"
+    : config.dbUrl;
 } else {
-  // Si usamos objeto (Local), usamos la config de db
+  // Configuración estándar usando el objeto config.db
   poolConfig = {
     ...config.db,
     waitForConnections: true,
-    connectionLimit: 5,
+    connectionLimit: 10,
+    queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000
   };
@@ -20,14 +26,15 @@ if (config.dbUrl) {
 
 const pool = mysql.createPool(poolConfig);
 
-// Verificación de salud de la conexión al arrancar
+// Verificación de salud de la conexión al arrancar el proceso
 (async () => {
     try {
         const connection = await pool.getConnection();
-        console.log('✅ CONEXIÓN EXITOSA: El puente Render-Railway está activo.');
+        console.log('✅ CONEXIÓN EXITOSA: El backend está vinculado a la base de datos.');
         connection.release();
     } catch (err) {
-        console.error('❌ ERROR DE ENLACE:', err.message);
+        console.error('❌ ERROR CRÍTICO DE CONEXIÓN:', err.message);
+        console.error('Detalles del Host intentado:', config.db.host);
     }
 })();
 
@@ -36,9 +43,11 @@ async function query(sql, params) {
     const [results] = await pool.execute(sql, params);
     return results;
   } catch (error) {
-    console.error('Error en DB:', error.message);
-    if (error.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.log('Reintentando consulta...');
+    console.error('Error en consulta DB:', error.message);
+    
+    // Gestión de reconexión automática si el servidor cierra el socket
+    if (error.code === 'PROTOCOL_CONNECTION_LOST' || error.fatal) {
+        console.log('🔄 Reintentando consulta por pérdida de conexión...');
         const [results] = await pool.execute(sql, params);
         return results;
     }
