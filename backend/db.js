@@ -10,15 +10,15 @@ const pool = mysql.createPool({
   keepAliveInitialDelay: 10000
 });
 
-// Verificación de conexión
+// Verificación de conexión inmediata
 (async () => {
     try {
         const connection = await pool.getConnection();
-        console.log('✅ CONEXIÓN INTERNA EXITOSA: Base de datos lista.');
+        console.log('✅ CONEXIÓN EXITOSA: El backend está unido a MySQL en Railway.');
         connection.release();
     } catch (err) {
         console.error('❌ ERROR DE CONEXIÓN:', err.message);
-        console.log('Intentando conectar a:', config.db.host, 'Puerto:', config.db.port);
+        console.log('Revisar Host:', config.db.host, 'Puerto:', config.db.port);
     }
 })();
 
@@ -28,6 +28,11 @@ async function query(sql, params) {
     return results;
   } catch (error) {
     console.error('Error en consulta DB:', error.message);
+    if (error.code === 'PROTOCOL_CONNECTION_LOST' || error.fatal) {
+        console.log('🔄 Reintentando consulta...');
+        const [results] = await pool.execute(sql, params);
+        return results;
+    }
     throw error;
   }
 }
