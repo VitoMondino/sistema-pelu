@@ -1,29 +1,20 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
-const pool = mysql.createPool({
-  ...config.db,
-  waitForConnections: true,
-  connectionLimit: 5,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  // Tiempos de espera agresivos para evitar el Timeout
-  connectTimeout: 20000 
-});
+const pool = mysql.createPool(config.db);
 
-(async function verificarConexion() {
-  console.log(`--- INTENTO DE CONEXIÓN FINAL ---`);
-  console.log(`Conectando a: ${config.db.host}:${config.db.port}`);
+(async function probar() {
+  console.log('--- INTENTO DE CONEXIÓN ---');
+  // Esto nos dirá si ahora sí lee el host
+  console.log(`Host configurado: ${config.db.host}`);
   
   try {
     const connection = await pool.getConnection();
-    console.log('✅ ¡SISTEMA CONECTADO! La base de datos respondió.');
+    console.log('✅ ¡CONEXIÓN EXITOSA! El backend ya ve la DB.');
     connection.release();
   } catch (err) {
-    console.error('❌ ERROR ACTUAL:', err.code);
-    console.log('Reintentando en 5 segundos...');
-    setTimeout(verificarConexion, 5000);
+    console.error('❌ ERROR:', err.code, err.message);
+    setTimeout(probar, 5000);
   }
 })();
 
