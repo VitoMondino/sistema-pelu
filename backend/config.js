@@ -1,17 +1,16 @@
 module.exports = {
   db: {
-    // Lee las variables de la captura image_708db7.png
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || 'mysql.railway.internal',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'Tunumero200105',
-    database: process.env.DB_NAME || 'railway', 
+    password: process.env.DB_PASSWORD || 'mnImCLKFaTTSvifYXwrO1DZgWizTkBcL',
+    database: process.env.DB_NAME || 'sistema-pelu', // Nombre exacto de tu captura
     port: Number(process.env.DB_PORT) || 3306,
     
-    // Configuración para Railway interno
+    // Configuración para red interna de Railway
     timezone: '+00:00',
     dateStrings: true,
     connectTimeout: 30000,
-    ssl: false // IMPORTANTE: Sin SSL para mysql.railway.internal
+    ssl: false // No es necesario dentro de Railway
   },
   server: {
     port: process.env.PORT || 8080,
