@@ -1,37 +1,39 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
+// Forzamos un objeto de configuración limpio
 const pool = mysql.createPool({
-  ...config.db,
+  host: config.db.host,
+  user: config.db.user,
+  password: config.db.password,
+  database: config.db.database,
+  port: config.db.port,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000
+  connectTimeout: 20000, // 20 segundos
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-// Función de conexión con reintento automático
-(async function connect() {
-    try {
-        const connection = await pool.getConnection();
-        console.log('✅ CONEXIÓN EXITOSA: Backend y MySQL unidos internamente.');
-        connection.release();
-    } catch (err) {
-        console.error('❌ ERROR DE ENLACE:', err.message);
-        console.log('Reintentando en 5 segundos...');
-        setTimeout(connect, 5000);
-    }
+(async function testConnection() {
+  try {
+    console.log(`⏳ Intentando conectar a: ${config.db.host}:${config.db.port}...`);
+    const connection = await pool.getConnection();
+    console.log('✅ CONEXIÓN EXITOSA: El puente con la DB está abierto.');
+    connection.release();
+  } catch (err) {
+    console.error('❌ ERROR REAL DE CONEXIÓN:', err.code, err.message);
+    // Si falla, reintenta en 5 segundos
+    setTimeout(testConnection, 5000);
+  }
 })();
 
 module.exports = {
   query: async (sql, params) => {
-    try {
-      const [results] = await pool.execute(sql, params);
-      return results;
-    } catch (error) {
-      console.error('Error en consulta:', error.message);
-      throw error;
-    }
+    const [results] = await pool.execute(sql, params);
+    return results;
   },
   pool
 };
