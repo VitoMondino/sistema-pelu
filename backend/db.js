@@ -1,22 +1,29 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
-const pool = mysql.createPool(config.db);
+const pool = mysql.createPool({
+  ...config.db,
+  waitForConnections: true,
+  connectionLimit: 5,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  // Tiempos de espera agresivos para evitar el Timeout
+  connectTimeout: 20000 
+});
 
-(async function verificar() {
-  console.log('--- DIAGNÓSTICO DE CONEXIÓN ---');
-  console.log(`Intentando conectar a: ${config.db.host} en puerto ${config.db.port}`);
-  console.log(`Base de datos: ${config.db.database}`);
+(async function verificarConexion() {
+  console.log(`--- INTENTO DE CONEXIÓN FINAL ---`);
+  console.log(`Conectando a: ${config.db.host}:${config.db.port}`);
   
   try {
     const connection = await pool.getConnection();
-    console.log('✅ CONEXIÓN EXITOSA: El backend y la DB están hablando.');
+    console.log('✅ ¡SISTEMA CONECTADO! La base de datos respondió.');
     connection.release();
   } catch (err) {
-    console.error('❌ FALLO DE CONEXIÓN:', err.code);
-    console.error('Mensaje completo:', err.message);
-    // Reintento automático cada 5 segundos
-    setTimeout(verificar, 5000);
+    console.error('❌ ERROR ACTUAL:', err.code);
+    console.log('Reintentando en 5 segundos...');
+    setTimeout(verificarConexion, 5000);
   }
 })();
 
